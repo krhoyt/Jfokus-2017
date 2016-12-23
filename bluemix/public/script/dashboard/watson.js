@@ -8,9 +8,6 @@ class Watson {
     // Root element
     this._element = document.querySelector( path );
 
-    // Key press to change translation and speech
-    document.addEventListener( 'keypress', evt => this.doKeyPress( evt ) );
-
     // Listen for session trigger
     this._element.addEventListener( 'click', evt => this.doWatsonClick( evt ) );
   }
@@ -38,22 +35,14 @@ class Watson {
     this._xhr = null;
 
     // Decision tree
-    if( data.intents[0].intent == 'welcome' ) {
-      this.say( data.output.text[0] );
-    }
-  }
+    switch( data.intents[0].intent ) {
+      case 'welcome':
+        this.say( data.output.text );
+        break;
 
-  doKeyPress( evt ) {
-    console.log( evt );
-
-    // Change languages for translation
-    // Change languages for speech
-    if( evt.key.toLowerCase() == 'e' && evt.shiftKey ) {
-      console.log( 'English.' );
-    } else if( evt.key.toLowerCase() == 's' && evt.shiftKey ) {
-      console.log( 'Swedish.' );
-    } else if( evt.key.toLowerCase() == 'g' && evt.shiftKey ) {
-      console.log( 'German.' );
+      case 'help':
+        window.open( data.output.text );
+        break;
     }
   }
 
