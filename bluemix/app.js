@@ -37,6 +37,7 @@ app.use( '/', express.static( 'public' ) );
 // Routes
 app.use( '/api', require( './routes/stt' ) );
 app.use( '/api', require( './routes/tts' ) );
+app.use( '/api', require( './routes/conversation' ) );
 
 // Bluemix
 var env = cfenv.getAppEnv();
