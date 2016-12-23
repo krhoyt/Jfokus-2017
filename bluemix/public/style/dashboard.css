@@ -1,7 +1,7 @@
 body {
   color: white;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   font-family: 'Roboto', sans-serif;  
   margin: 0;
   padding: 0;
@@ -26,19 +26,6 @@ section {
 svg {
   flex-grow: 1;
   margin: 50px 0 50px 0;
-}
-
-.egg {
-  background-image: url( ../img/not.impressed.jpg );
-  background-position: center;
-  background-repeat: none;
-  background-size: cover;
-  bottom: 0;
-  left: 0;  
-  position: absolute;
-  top: 0;
-  right: 0;
-  visibility: hidden;
 }
 
 .history {
@@ -92,13 +79,6 @@ svg {
   background-image: url( ../img/weather.svg );
 }
 
-.humidity > .status {
-  background-image: url( ../img/ibm.svg );
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: auto 18px;
-}
-
 .icon {
   background-position: center;
   background-repeat: no-repeat;
@@ -115,8 +95,12 @@ svg {
   background-image: url( ../img/summer.svg );
 }
 
-.light > .status {
-  justify-content: flex-end;
+.panels {
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+  margin: 0;
+  padding: 0;
 }
 
 .temperature {
@@ -132,8 +116,15 @@ svg {
   display: flex;
   flex-direction: row;
   height: 50px;
-  justify-content: flex-start;
-  padding: 0 15px 0 8px;
+  padding: 0 16px 0 16px;
+}
+
+.status > div {
+  background-image: url( ../img/ibm.svg );
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: auto 18px;
+  flex-grow: 1;
 }
 
 .status > p {
@@ -145,7 +136,11 @@ svg {
   padding: 0 0 0 7px;  
 }
 
-.status > p:nth-of-type( 2 ) {
+.status > p:first-of-type {
+  padding: 0;
+}
+
+.status > p.highlight {
   color: rgb( 255, 255, 255 );
   font-weight: 700;
 }

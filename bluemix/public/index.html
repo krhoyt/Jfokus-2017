@@ -13,113 +13,123 @@
 </head>
 <body>
 
-<!-- Temperature -->
-<section class="temperature">  
+<!-- Environment -->
+<div class="panels">
 
-  <!-- Heading -->
-  <h1>Temperature</h1>
+  <!-- Temperature -->
+  <section class="temperature">  
 
-  <!-- Icon -->
-  <div class="icon"></div>
+    <!-- Heading -->
+    <h1>Temperature</h1>
 
-  <!-- Historical ranges -->
-  <!-- Minimum -->
-  <!-- Maximum -->
-  <!-- Current -->
-  <div class="history">
-    <div>
-      <p>Min:</p>
-      <p>0</p>
-      <p>&deg;</p>
+    <!-- Icon -->
+    <div class="icon"></div>
+
+    <!-- Historical ranges -->
+    <!-- Minimum -->
+    <!-- Maximum -->
+    <!-- Current -->
+    <div class="history">
+      <div>
+        <p>Min:</p>
+        <p>0</p>
+        <p>&deg;</p>
+      </div>
+      <div>
+        <p>Max:</p>
+        <p>0</p>
+        <p>&deg;</p>
+      </div>  
+      <div>
+        <p>Now:</p>
+        <p>0</p>
+        <p>&deg;</p>
+      </div>
     </div>
-    <div>
-      <p>Max:</p>
-      <p>0</p>
-      <p>&deg;</p>
+
+    <!-- Chart values over time -->
+    <svg class="chart">
+      <g></g>
+      <g></g>
+    </svg>
+
+  </section>
+
+  <!-- Humidity -->
+  <section class="humidity">
+    <h1>Humidity</h1>
+    <div class="icon"></div>  
+    <div class="history">
+      <div>
+        <p>Min:</p>
+        <p>0</p>
+        <p>%</p>
+      </div>
+      <div>
+        <p>Max:</p>
+        <p>0</p>
+        <p>%</p>
+      </div>  
+      <div>
+        <p>Now:</p>
+        <p>0</p>
+        <p>%</p>
+      </div>
     </div>  
-    <div>
-      <p>Now:</p>
-      <p>0</p>
-      <p>&deg;</p>
-    </div>
-  </div>
+    <svg class="chart">
+      <g></g>
+      <g></g>    
+    </svg> 
+  </section>
 
-  <!-- Chart values over time -->
-  <svg class="chart">
-    <g></g>
-    <g></g>
-  </svg>
+  <!-- Light -->
+  <section class="light">
+    <h1>Light</h1>
+    <div class="icon"></div>  
+    <div class="history">
+      <div>
+        <p>Min:</p>
+        <p>0</p>
+        <p>%</p>
+      </div>
+      <div>
+        <p>Max:</p>
+        <p>0</p>
+        <p>%</p>
+      </div>  
+      <div>
+        <p>Now:</p>
+        <p>0</p>
+        <p>%</p>
+      </div>
+    </div> 
+    <svg class="chart">
+      <g></g>
+      <g></g>    
+    </svg>
+  </section>
 
-  <!-- Status area -->
-  <!-- Content varies per panel -->
-  <!-- Middle element changes content -->
-  <div class="status">
-    <p>Reporting</p> 
-    <p>0</p>
-    <p>sensors.</p>
-  </div>
+</div>
+
+<!-- Status area -->
+<div class="status">
   
-</section>
+  <!-- Sensor count -->
+  <p>Reporting</p> 
+  <p class="highlight">0</p>
+  <p>sensors.</p>
 
-<!-- Humidity -->
-<section class="humidity">
-  <h1>Humidity</h1>
-  <div class="icon"></div>  
-  <div class="history">
-    <div>
-      <p>Min:</p>
-      <p>0</p>
-      <p>%</p>
-    </div>
-    <div>
-      <p>Max:</p>
-      <p>0</p>
-      <p>%</p>
-    </div>  
-    <div>
-      <p>Now:</p>
-      <p>0</p>
-      <p>%</p>
-    </div>
-  </div>  
-  <svg class="chart">
-    <g></g>
-    <g></g>    
-  </svg> 
-  <div class="status"></div>
-</section>
+  <!-- Hit area -->
+  <!-- Branding -->
+  <!-- Extras -->
+  <div></div>
 
-<!-- Light -->
-<section class="light">
-  <h1>Light</h1>
-  <div class="icon"></div>  
-  <div class="history">
-    <div>
-      <p>Min:</p>
-      <p>0</p>
-      <p>%</p>
-    </div>
-    <div>
-      <p>Max:</p>
-      <p>0</p>
-      <p>%</p>
-    </div>  
-    <div>
-      <p>Now:</p>
-      <p>0</p>
-      <p>%</p>
-    </div>
-  </div> 
-  <svg class="chart">
-    <g></g>
-    <g></g>    
-  </svg>
-  <div class="status">
-    <p>Updated</p>
-    <p>some time</p>
-    <p>ago.</p>
-  </div>
-</section>
+  <!-- Timing -->
+  <p>Updated</p>
+  <p class="highlight">some time</p>
+  <p>ago.</p>
+
+</div>
 
 <!-- Socket IO -->
 <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
@@ -127,16 +137,12 @@
 <!-- Moment -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.17.0/moment.min.js"></script>
 
-<!-- Event dispatching -->
-<!-- Flux-ish -->
-<script src="script/dispatcher.js"></script>
-<script src="script/dashboard.event.js"></script>
-
 <!-- Components -->
 <!-- Shadow DOM where are you?! -->
 <script src="script/dashboard/history.js"></script>
 <script src="script/dashboard/chart.js"></script>
 <script src="script/dashboard/panel.js"></script>
+<script src="script/dashboard/status.js"></script>
 
 <!-- Application -->
 <script src="script/dashboard/dashboard.js"></script>
