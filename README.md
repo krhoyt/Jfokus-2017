@@ -1,2 +1,3 @@
-# Jfokus-2017
-Sweden's largest developer conference.
+# Jfokus 2017
+
+*February 6 - 8, 2017*
