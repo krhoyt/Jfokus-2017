@@ -1,0 +1,145 @@
+<html>
+<head>
+
+<title>Dashboard</title>
+
+<!-- Google Fonts -->
+<!-- Roboto -->
+<link href="https://fonts.googleapis.com/css?family=Roboto:300,400,700" rel="stylesheet">
+
+<!-- Styles -->
+<link href="style/dashboard.css" rel="stylesheet">
+
+</head>
+<body>
+
+<!-- Temperature -->
+<section class="temperature">  
+
+  <!-- Heading -->
+  <h1>Temperature</h1>
+
+  <!-- Icon -->
+  <div class="icon"></div>
+
+  <!-- Historical ranges -->
+  <!-- Minimum -->
+  <!-- Maximum -->
+  <!-- Current -->
+  <div class="history">
+    <div>
+      <p>Min:</p>
+      <p>0</p>
+      <p>&deg;</p>
+    </div>
+    <div>
+      <p>Max:</p>
+      <p>0</p>
+      <p>&deg;</p>
+    </div>  
+    <div>
+      <p>Now:</p>
+      <p>0</p>
+      <p>&deg;</p>
+    </div>
+  </div>
+
+  <!-- Chart values over time -->
+  <svg class="chart">
+    <g></g>
+    <g></g>
+  </svg>
+
+  <!-- Status area -->
+  <!-- Content varies per panel -->
+  <!-- Middle element changes content -->
+  <div class="status">
+    <p>Reporting</p> 
+    <p>0</p>
+    <p>sensors.</p>
+  </div>
+  
+</section>
+
+<!-- Humidity -->
+<section class="humidity">
+  <h1>Humidity</h1>
+  <div class="icon"></div>  
+  <div class="history">
+    <div>
+      <p>Min:</p>
+      <p>0</p>
+      <p>%</p>
+    </div>
+    <div>
+      <p>Max:</p>
+      <p>0</p>
+      <p>%</p>
+    </div>  
+    <div>
+      <p>Now:</p>
+      <p>0</p>
+      <p>%</p>
+    </div>
+  </div>  
+  <svg class="chart">
+    <g></g>
+    <g></g>    
+  </svg> 
+  <div class="status"></div>
+</section>
+
+<!-- Light -->
+<section class="light">
+  <h1>Light</h1>
+  <div class="icon"></div>  
+  <div class="history">
+    <div>
+      <p>Min:</p>
+      <p>0</p>
+      <p>%</p>
+    </div>
+    <div>
+      <p>Max:</p>
+      <p>0</p>
+      <p>%</p>
+    </div>  
+    <div>
+      <p>Now:</p>
+      <p>0</p>
+      <p>%</p>
+    </div>
+  </div> 
+  <svg class="chart">
+    <g></g>
+    <g></g>    
+  </svg>
+  <div class="status">
+    <p>Updated</p>
+    <p>some time</p>
+    <p>ago.</p>
+  </div>
+</section>
+
+<!-- Socket IO -->
+<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+
+<!-- Moment -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.17.0/moment.min.js"></script>
+
+<!-- Event dispatching -->
+<!-- Flux-ish -->
+<script src="script/dispatcher.js"></script>
+<script src="script/dashboard.event.js"></script>
+
+<!-- Components -->
+<!-- Shadow DOM where are you?! -->
+<script src="script/dashboard/history.js"></script>
+<script src="script/dashboard/chart.js"></script>
+<script src="script/dashboard/panel.js"></script>
+
+<!-- Application -->
+<script src="script/dashboard/dashboard.js"></script>
+
+</body>
+</html>
