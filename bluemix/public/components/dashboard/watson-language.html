@@ -1,0 +1,64 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="watson-language">
+
+  <template>
+    <style>
+      :host {
+        display: none;
+        position: absolute;
+      }      
+    </style>
+  </template>
+
+  <script>
+    class WatsonLanguage extends Polymer.Element {
+      static get is() { return 'watson-language'; }
+
+      static get config() {
+        return {
+        	properties: {
+            xhr: Object
+          }
+        };
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+      }
+
+      analyze( value ) {
+        this.xhr = new XMLHttpRequest();
+        this.xhr.addEventListener( 'load', evt => this.doLoad( evt ) );
+        this.xhr.open( 'POST', WatsonLanguage.ANALYZE, true );
+        this.xhr.setRequestHeader( 'Content-Type', 'application/json' );       
+        this.xhr.send( JSON.stringify( {
+          handle: value
+        } ) );        
+      }
+
+      doLoad( evt ) {
+        var data = null;
+
+        data = JSON.parse( this.xhr.responseText );
+
+        console.log( data );
+
+        this.xhr.removeEventListener( 'load', this.doLoad );
+        this.xhr = null;
+
+        this.dispatchEvent( new CustomEvent( WatsonLanguage.COMPLETE, {
+          detail: {
+            language: data
+          }
+        } ) );
+      }
+    }
+
+    WatsonLanguage.ANALYZE = '/api/language';
+    WatsonLanguage.COMPLETE = 'watson-language-complete';
+
+    customElements.define( WatsonLanguage.is, WatsonLanguage );
+  </script>
+		
+</dom-module>

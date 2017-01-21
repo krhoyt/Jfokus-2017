@@ -10,141 +10,52 @@
 <!-- Styles -->
 <link href="style/dashboard.css" rel="stylesheet">
 
+<!-- Polymer -->
+<!-- 2.0 Preview -->
+<script src="bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+
+<!-- Components -->
+<link rel="import" href="components/dashboard/image-splash.html">
+<link rel="import" href="components/dashboard/iot-orientation.html">
+<link rel="import" href="components/dashboard/iot-panel.html">
+<link rel="import" href="components/dashboard/iot-status.html">
+<link rel="import" href="components/dashboard/twitter-field.html">
+<link rel="import" href="components/dashboard/watson-conversation.html">
+<link rel="import" href="components/dashboard/watson-language.html">
+<link rel="import" href="components/dashboard/watson-stt.html">
+<link rel="import" href="components/dashboard/watson-tts.html">
+
 </head>
 <body>
 
-<!-- Environment -->
-<div class="panels">
+<!-- Sensor values -->
+<iot-panel title="Temperature" icon="thermometer.svg" field="temperature" units="&deg;"></iot-panel>
+<iot-panel title="Humidity" icon="weather.svg" field="humidity" units="%"></iot-panel>
+<iot-panel title="Light" icon="summer.svg" field="light" units="%"></iot-panel>
 
-  <!-- Temperature -->
-  <section class="temperature">  
+<!-- Status bar -->
+<twitter-field placeholder="@"></twitter-field>
+<iot-status count="0"></iot-status>
 
-    <!-- Heading -->
-    <h1>Temperature</h1>
+<!-- Device orientation -->
+<iot-orientation portrait="0" landscape="0" units="%"></iot-orientation>
 
-    <!-- Icon -->
-    <div class="icon"></div>
+<!-- Image splash -->
+<image-splash></image-splash>
 
-    <!-- Historical ranges -->
-    <!-- Minimum -->
-    <!-- Maximum -->
-    <!-- Current -->
-    <div class="history">
-      <div>
-        <p>Min:</p>
-        <p>0</p>
-        <p>&deg;</p>
-      </div>
-      <div>
-        <p>Max:</p>
-        <p>0</p>
-        <p>&deg;</p>
-      </div>  
-      <div>
-        <p>Now:</p>
-        <p>0</p>
-        <p>&deg;</p>
-      </div>
-    </div>
-
-    <!-- Chart values over time -->
-    <svg class="chart">
-      <g></g>
-      <g></g>
-    </svg>
-
-  </section>
-
-  <!-- Humidity -->
-  <section class="humidity">
-    <h1>Humidity</h1>
-    <div class="icon"></div>  
-    <div class="history">
-      <div>
-        <p>Min:</p>
-        <p>0</p>
-        <p>%</p>
-      </div>
-      <div>
-        <p>Max:</p>
-        <p>0</p>
-        <p>%</p>
-      </div>  
-      <div>
-        <p>Now:</p>
-        <p>0</p>
-        <p>%</p>
-      </div>
-    </div>  
-    <svg class="chart">
-      <g></g>
-      <g></g>    
-    </svg> 
-  </section>
-
-  <!-- Light -->
-  <section class="light">
-    <h1>Light</h1>
-    <div class="icon"></div>  
-    <div class="history">
-      <div>
-        <p>Min:</p>
-        <p>0</p>
-        <p>%</p>
-      </div>
-      <div>
-        <p>Max:</p>
-        <p>0</p>
-        <p>%</p>
-      </div>  
-      <div>
-        <p>Now:</p>
-        <p>0</p>
-        <p>%</p>
-      </div>
-    </div> 
-    <svg class="chart">
-      <g></g>
-      <g></g>    
-    </svg>
-  </section>
-
-</div>
-
-<!-- Status area -->
-<div class="status">
-  
-  <!-- Sensor count -->
-  <p>Reporting</p> 
-  <p class="highlight">0</p>
-  <p>sensors.</p>
-
-  <!-- Branding -->
-  <!-- Watson extras -->
-  <div class="watson"></div>
-
-  <!-- Timing -->
-  <p>Updated</p>
-  <p class="highlight">some time</p>
-  <p>ago.</p>
-
-</div>
+<!-- Watson -->
+<watson-stt></watson-stt>
+<watson-tts></watson-tts>
+<watson-conversation></watson-conversation>
+<watson-language></watson-language>
 
 <!-- Libraries -->
-<script src="lib/moment/moment.min-2.17.0.js"></script>
-<script src="lib/socketio/socket.io-1.4.5.js"></script>
-<script src="lib/watson/watson-speech-0.27.0.js"></script>
-
-<!-- Components -->
-<!-- Shadow DOM where are you?! -->
-<script src="script/dashboard/history.js"></script>
-<script src="script/dashboard/chart.js"></script>
-<script src="script/dashboard/panel.js"></script>
-<script src="script/dashboard/watson.js"></script>
-<script src="script/dashboard/status.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.2/socket.io.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.19.1/TweenMax.min.js"></script>
+<script src="lib/watson-speech-0.30.1.js"></script>
 
 <!-- Application -->
-<script src="script/dashboard/dashboard.js"></script>
+<script src="script/dashboard.js"></script>
 
 </body>
 </html>

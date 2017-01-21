@@ -1,0 +1,51 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="image-splash">
+
+  <template>
+    <style>
+      :host {
+        background-image: url( /img/not.impressed.jpg );
+        background-position: center;
+        background-repeat: none;
+        background-size: cover;
+        bottom: 0;
+        left: 0;  
+        position: absolute;
+        top: 0;
+        right: 0;
+        visibility: hidden;
+      }
+    </style>
+  </template>
+
+  <script>
+    class ImageSplash extends Polymer.Element {
+      static get is() { return 'image-splash'; }
+
+      static get config() {
+        return {
+        	properties: {
+            image: String
+        	}
+        };
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+        this.addEventListener( 'click', evt => this.doClick( evt ) );
+      }
+
+      show() {
+        this.style.visibility = 'visible';
+      }
+
+      doClick( evt ) {
+        this.style.visibility = 'hidden';
+      }
+    }
+
+    customElements.define( ImageSplash.is, ImageSplash );
+  </script>
+		
+</dom-module>

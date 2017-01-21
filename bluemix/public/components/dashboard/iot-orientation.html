@@ -1,0 +1,107 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="iot-orientation">
+
+  <template>
+    <style>
+      :host {
+        display: none;
+        flex-direction: row;
+        height: 100px;
+        position: absolute;
+      }
+
+      div {
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: contain;        
+        display: flex;
+        flex-basis: 0;
+        flex-direction: row;
+        flex-grow: 1;
+        justify-content: center;
+      }
+
+      div:nth-of-type( 1 ) {
+        background-image: url( /img/portrait.svg );        
+      }
+
+      div:nth-of-type( 2 ) {
+        background-image: url( /img/landscape.svg );        
+      }
+
+      div > p {
+        color: white;
+        line-height: 100px;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+
+    <div>
+      <p>[[portrait]]</p>
+      <p>[[units]]</p>
+    </div>
+    <div>
+      <p>[[landscape]]</p>
+      <p>[[units]]</p>
+    </div>
+  </template>
+
+  <script>
+    class Orientation extends Polymer.Element {
+      static get is() { return 'iot-orientation'; }
+
+      static get config() {
+        return {
+        	properties: {
+            landscape: Number,
+            portrait: Number,
+            units: String
+        	}
+        };
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+
+        this.addEventListener( 'click', evt => this.doClick( evt ) );
+
+        window.addEventListener( 'resize', evt => this.doWindowResize( evt ) );
+        this.layout();
+      }
+
+      layout() {
+        this.style.width = ( ( window.innerWidth / 3 ) * 2 ) + 'px';
+        this.style.left = ( ( window.innerWidth / 3 ) / 2 ) + 'px';
+      }
+
+      hide() {
+        this.style.display = 'none';
+      }
+
+      show() {
+        this.style.display = 'flex';
+      }
+
+      toggle() {
+        if( this.style.display == 'none' || this.style.display == '' ) {
+          this.show();
+        } else {
+          this.hide();
+        }
+      }
+
+      doClick( evt ) {
+        this.style.display = 'none';
+      }
+
+      doWindowResize( evt ) {
+        this.layout();
+      }
+    }
+
+    customElements.define( Orientation.is, Orientation );
+  </script>
+		
+</dom-module>

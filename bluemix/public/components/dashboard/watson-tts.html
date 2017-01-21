@@ -1,0 +1,56 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="watson-tts">
+
+  <template>
+    <style>
+      :host {
+        display: none;
+        position: absolute;
+      }      
+    </style>
+  </template>
+
+  <script>
+    class WatsonTTS extends Polymer.Element {
+      static get is() { return 'watson-tts'; }
+
+      static get config() {
+        return {
+        	properties: {
+            transcript: String,
+            xhr: Object
+          }
+        };
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+      }
+
+      say( value ) {
+        this.transcript = value;
+
+        this.xhr = new XMLHttpRequest();
+        this.xhr.addEventListener( 'load', evt => this.doToken( evt ) );
+        this.xhr.open( 'GET', WatsonTTS.TOKEN, true );
+        this.xhr.send( null );          
+      }
+
+      doToken( evt ) {
+        WatsonSpeech.TextToSpeech.synthesize( {
+          text: this.transcript,
+          token: this.xhr.responseText
+        } );
+
+        this.xhr.removeEventListener( 'load', this.doToken );
+        this.xhr = null;        
+      }
+    }
+
+    WatsonTTS.TOKEN = '/api/tts/token';
+
+    customElements.define( WatsonTTS.is, WatsonTTS );
+  </script>
+		
+</dom-module>

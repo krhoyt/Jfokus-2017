@@ -1,0 +1,110 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="iot-history">
+
+  <template>
+    <style>
+      :host {
+        display: flex;
+        flex-direction: row;
+      }
+
+      div {
+        display: flex;
+        flex-basis: 0;
+        flex-direction: row;
+        flex-grow: 1;
+        margin: 50px 0 0 0;
+        padding: 0;
+      }
+
+      div:nth-of-type( 1 ) {
+        justify-content: flex-end;  
+      }
+
+      div:nth-of-type( 2 ) {
+        justify-content: center;  
+      }
+
+      div > p {
+        font-size: 18px;
+        font-weight: 300;    
+        line-height: 20px;
+        margin: 0;
+        padding: 0;  
+      }
+
+      div > p:first-of-type {
+        margin: 0 7px 0 0;
+        opacity: 0.65;
+      }
+
+      div:last-of-type > p {
+        font-weight: 700;
+      }
+
+      div:last-of-type > p:first-of-type {
+        font-weight: 300;
+      }      
+    </style>
+
+    <div>
+      <p>Min:</p>
+      <p>[[minimum]]</p>
+      <p>[[units]]</p>
+    </div>
+    <div>
+      <p>Max:</p>
+      <p>[[maximum]]</p>
+      <p>[[units]]</p>
+    </div>  
+    <div>
+      <p>Now:</p>
+      <p>[[current]]</p>
+      <p>[[units]]</p>
+    </div>
+  </template>
+
+  <script>
+    class History extends Polymer.Element {
+      static get is() { return 'iot-history'; }
+
+      static get config() {
+        return {
+        	properties: {
+            count: Number,
+            current: Number,
+            maximum: Number,
+            minimum: Number,
+            units: String
+        	}
+        };
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+      }
+
+      push( value ) {
+        this.current = Math.round( value );
+
+        if( this.count == undefined ) {
+          this.minimum = Math.round( value );
+          this.maximum = Math.round( value );
+          this.count = 1;
+        } else {
+          if( value < this.minimum ) {
+            this.minimum = Math.round( value );
+          }
+
+          if( value > this.maximum ) {
+            this.maximum = Math.round( value );
+          }
+        }
+      }
+    }
+
+    customElements.define( History.is, History );
+  </script>
+		
+</dom-module>

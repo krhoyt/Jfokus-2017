@@ -1,146 +1,38 @@
 body {
   color: white;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   font-family: 'Roboto', sans-serif;  
   margin: 0;
   padding: 0;
 }
 
-h1 {
-  font-size: 27px;
-  font-weight: 300; 
-  line-height: 30px;   
-  margin: 50px 0 0 0;
-  padding: 0;
-  text-align: center;
+iot-orientation {
+  top: 130px;
 }
 
-section {
-  display: flex;
-  flex-basis: 0;
-  flex-direction: column;
-  flex-grow: 1;  
-}
-
-svg {
-  flex-grow: 1;
-  margin: 50px 0 50px 0;
-}
-
-.history {
-  display: flex;
-  flex-direction: row;
-}
-
-.history > div {
-  display: flex;
-  flex-basis: 0;
-  flex-direction: row;
-  flex-grow: 1;
-  margin: 50px 0 0 0;
-  padding: 0;
-}
-
-.history > div:nth-of-type( 1 ) {
-  justify-content: flex-end;  
-}
-
-.history > div:nth-of-type( 2 ) {
-  justify-content: center;  
-}
-
-.history > div > p {
-  font-size: 18px;
-  font-weight: 300;    
-  line-height: 20px;
-  margin: 0;
-  padding: 0;  
-}
-
-.history > div > p:first-of-type {
-  margin: 0 7px 0 0;
-  opacity: 0.65;
-}
-
-.history > div:last-of-type > p {
-  font-weight: 700;
-}
-
-.history > div:last-of-type > p:first-of-type {
-  font-weight: 300;
-}
-
-.humidity {
-  background-color: #182637;
-}
-
-.humidity > .icon {
-  background-image: url( ../img/weather.svg );
-}
-
-.icon {
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: contain;
-  height:  100px;
-  margin: 50px 0 0 0;
-}
-
-.light {
-  background-color: #323232;
-}
-
-.light > .icon {
-  background-image: url( ../img/summer.svg );
-}
-
-.panels {
-  display: flex;
-  flex-direction: row;
-  flex-grow: 1;
-  margin: 0;
-  padding: 0;
-}
-
-.temperature {
+iot-panel:nth-of-type( 1 ) {
   background-color: #1f3549;
 }
 
-.temperature > .icon {
-  background-image: url( ../img/thermometer.svg );
+iot-panel:nth-of-type( 2 ) {
+  background-color: #182637;
 }
 
-.status {
-  background-color: rgb( 65, 120, 190 ); 
-  display: flex;
-  flex-direction: row;
-  height: 50px;
-  padding: 0 16px 0 16px;
+iot-panel:nth-of-type( 3 ) {
+  background-color: #323232;
 }
 
-.status > div {
-  background-image: url( ../img/ibm.svg );
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: auto 18px;
-  flex-grow: 1;
+iot-status {
+  bottom: 0;  
+  left: 0;
+  position: absolute;  
+  right: 0;
 }
 
-.status > p {
-  color: rgba( 255, 255, 255, 0.65 );  
-  font-size: 18px;
-  font-weight: 300;  
-  line-height: 50px;
-  margin: 0;
-  padding: 0 0 0 7px;  
-}
-
-.status > p:first-of-type {
-  padding: 0;
-}
-
-.status > p.highlight {
-  color: rgb( 255, 255, 255 );
-  font-weight: 700;
+twitter-field {
+  bottom: 0;  
+  left: 0;
+  position: absolute;  
+  right: 0;
 }

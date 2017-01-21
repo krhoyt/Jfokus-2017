@@ -1,0 +1,38 @@
+{
+	"iot_host": "mqtt://ab123z.messaging.internetofthings.ibmcloud.com",
+	"iot_client": "a:ab123z:Stacks",
+	"iot_user": "a-ab123z-wkonkqxfx4",
+	"iot_password": "ZFi@wHAa1sXVsh0bxC",
+	"iot_port": 1883,
+	"topic_rate": "iot-2/type/Tessel/id/IBM/cmd/rate/fmt/json",
+	"topic_stacks": "iot-2/type/Tessel/id/IBM/evt/stacks/fmt/json",
+  "topic_stream": "iot-2/type/Jfokus/id/Accelerometer/cmd/averages/fmt/json",
+	"cloudant_key": "hatudidestardestyterrace",
+	"cloudant_password": "d7503fdc4e43fa1s3e3c53a7efff894b5799740f",
+  "cloudant_uri": "https://account.cloudant.com/stacks",
+  "stt": {
+    "stream": "https://stream.watsonplatform.net/authorization/api/v1/token",
+    "url": "https://stream.watsonplatform.net/speech-to-text/api",
+    "password": "FFTiG8Alz123",
+    "username": "42dbb148-abr4-4840-879d-b692d6e60f04"    
+  },
+  "tts": {
+    "url": "https://stream.watsonplatform.net/text-to-speech/api",
+    "password": "ManMCcKXrjAu",
+    "username": "4bb16279-1bba-4c21-be71-64915270de90",
+    "stream": "https://stream.watsonplatform.net/authorization/api/v1/token"
+  },
+  "conversation": {
+    "url": "https://gateway.watsonplatform.net/conversation/api",
+    "password": "40inKtsG1tkWc",
+    "username": "2af6321f-13db-48e6-9e4b-e7c161b92c39",
+    "message": "/message",
+    "version": "?version=2016-09-20",
+    "workspace_path": "/v1/workspaces/",
+    "workspace_id": "3d40c85a-12ff-4a80-8146-3b5e86583b67"
+  },
+  "alchemy": {
+    "url": "https://gateway-a.watsonplatform.net/calls/url/URLGetCombinedData",
+    "api_key": "5cf2a6598c53886333kjh6d3cea2149482403c28"        
+  }  
+}

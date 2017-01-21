@@ -1,0 +1,121 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="twitter-field">
+
+  <template>
+    <style>
+      :host {
+        display: flex;
+        flex-direction: row;
+        height: 48px;
+      }
+
+      :host > div {
+        display: flex;
+        flex-basis: 0;
+        flex-direction: row;
+        flex-grow: 1;        
+      }
+
+      div > div:nth-of-type( 2 ) {
+        background-color: rgb( 65, 120, 190 );
+        flex-grow: 1;
+        position: relative;
+      }
+
+      div > div:nth-of-type( 2 ) > div {
+        background-color: rgba( 255, 255, 255, 0.12 );
+        bottom: 8px;
+        height: 1px;
+        left: 0;
+        position: absolute;
+        right: 0;
+      }
+
+      div > div:nth-of-type( 2 ) > span {
+        bottom: 16px;
+        left: 0;
+        position: absolute;
+        right: 0;
+      }
+
+      input {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 16px;
+        outline: none;
+        text-align: center;
+        width: 100%;
+      }
+
+      ::-webkit-input-placeholder {
+        color: rgba( 255, 255, 255, 0.70 );
+      }
+
+      .tab:first-of-type {
+        background-image: url( '/img/tab.curve.in.svg' );
+        background-repeat: none;  
+        background-size: 48px;
+        height: 48px;
+        width: 48px;
+      }
+
+      .tab:last-of-type {
+        background-image: url( '/img/tab.curve.out.svg' );
+        background-repeat: none;  
+        background-size: 48px;
+        height: 48px;
+        width: 48px;
+      }
+    </style>
+
+    <div></div>
+    <div>
+      <div class="tab"></div>
+      <div>
+        <span>
+          <input placeholder="[[placeholder]]" value="[[handle]]" on-keypress="doHandlePress">
+        </span>
+        <div></div>
+      </div>
+      <div class="tab"></div>
+    </div>
+    <div></div> 
+  </template>
+
+  <script>
+    class TwitterField extends Polymer.Element {
+      static get is() { return 'twitter-field'; }
+
+      static get config() {
+        return {
+        	properties: {
+            handle: String,
+            placeholder: String
+        	}
+        };
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+      }
+
+      doHandlePress( evt ) {
+        if( evt.keyCode == 13 ) {
+          evt.target.blur();
+          this.dispatchEvent( new CustomEvent( TwitterField.ENTER, {
+            detail: {
+              handle: evt.target.value
+            }
+          } ) );
+        }
+      }
+    }
+
+    TwitterField.ENTER = 'twitter-field-enter';
+
+    customElements.define( TwitterField.is, TwitterField );
+  </script>
+		
+</dom-module>

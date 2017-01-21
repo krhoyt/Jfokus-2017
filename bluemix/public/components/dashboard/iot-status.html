@@ -1,0 +1,116 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="iot-status">
+
+  <template>
+    <style>
+      :host {
+        background-color: rgb( 65, 120, 190 ); 
+        display: flex;
+        flex-direction: row;
+        height: 50px;
+        padding: 0 16px 0 16px;
+      }
+
+      div {
+        display: flex;
+        flex-basis: 0;
+        flex-direction: row;
+        flex-grow: 1;
+      }
+
+      div:nth-of-type( 2 ) {
+        background-image: url( /img/ibm.svg );
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: auto 18px;
+      }
+
+      div:nth-of-type( 3 ) {
+        align-items: center;
+        justify-content: flex-end;
+      }
+
+      div:nth-of-type( 3 ):hover {
+        opacity: 1.0;
+      }
+
+      div > p {
+        color: rgba( 255, 255, 255, 0.65 );  
+        font-size: 18px;
+        font-weight: 300;  
+        line-height: 50px;
+        padding: 0;
+        margin: 0;
+      }     
+
+      div > p:nth-of-type( 2 ) {
+        color: white;
+        font-weight: 700;
+        padding: 0 8px 0 8px;
+      }
+
+      img {
+        opacity: 0.65;
+      }
+
+      img:hover {
+        opacity: 1.0;
+      }
+    </style>
+
+    <div>
+      <p>Reporting</p> 
+      <p>[[count]]</p>
+      <p>sensors.</p>  
+    </div>
+    <div on-click="doLogoClick"></div>  
+    <div>
+      <img src="/img/help.svg" width="22" height="22" on-click="doHelpClick">
+    </div>    
+  </template>
+
+  <script>
+    class Status extends Polymer.Element {
+      static get is() { return 'iot-status'; }
+
+      static get config() {
+        return {
+        	properties: {
+            count: Number
+        	}
+        };
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+      }
+
+      doHelpClick( evt ) {
+        this.dispatchEvent( new CustomEvent( Status.HELP_CLICK, null ) );
+      }
+
+      doLogoClick( evt ) {
+        var custom = null;
+
+        if( evt.altKey ) {
+          custom = Status.ALT_CLICK;
+        } else if( evt.shiftKey ) {
+          custom = Status.SHIFT_CLICK;
+        } else {
+          custom = Status.LEFT_CLICK;
+        }
+        
+        this.dispatchEvent( new CustomEvent( custom, null ) );
+      }      
+    }
+
+    Status.ALT_CLICK = 'alt-click';
+    Status.HELP_CLICK = 'help-click';
+    Status.LEFT_CLICK = 'left-click';
+    Status.SHIFT_CLICK = 'shift-click';
+
+    customElements.define( Status.is, Status );
+  </script>
+		
+</dom-module>

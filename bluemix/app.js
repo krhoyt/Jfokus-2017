@@ -4,11 +4,10 @@ var express = require( 'express' );
 var jsonfile = require( 'jsonfile' );
 var mqtt = require( 'mqtt' );
 var parser = require( 'body-parser' );
-var path = require( 'path' );
 var request = require( 'request' );
 
 // External configuration
-config = jsonfile.readFileSync( path.join( __dirname, 'config.json' ) );
+config = jsonfile.readFileSync( __dirname + '/config.json' );
 
 // Application
 var app = express();
@@ -35,9 +34,11 @@ app.use( function( req, res, next ) {
 app.use( '/', express.static( 'public' ) );
 
 // Routes
+app.use( '/api', require( './routes/conversation' ) );
+app.use( '/api', require( './routes/language' ) );
+app.use( '/api', require( './routes/sensor' ) );
 app.use( '/api', require( './routes/stt' ) );
 app.use( '/api', require( './routes/tts' ) );
-app.use( '/api', require( './routes/conversation' ) );
 
 // Bluemix
 var env = cfenv.getAppEnv();
@@ -75,38 +76,30 @@ var client  = mqtt.connect(
 // Subscribe for sensor data
 client.on( 'connect', function() {
   console.log( 'Connected.' );
+
   client.subscribe( config.topic_stacks, function( error, granted ) {
-    console.log( 'Subscribed.' );
+    console.log( 'Sensors.' );
   } );
+
+  client.subscribe( config.topic_stream, function( error, granted ) {
+    console.log( 'Streaming.' );
+  } );  
 } );
 
 // New message arrived
 client.on( 'message', function( topic, message ) {
   var data = null;
-  var hash = null;
+  var destination = null;
 
   // Parse JSON
   data = JSON.parse( message.toString() );
 
+  if( topic == config.topic_stream ) {
+    destination = 'stream';
+  } else {
+    destination = 'sensor';
+  }
+
   // Send to dashboard
-  io.emit( 'stacks', data );
-
-  // HTTP Basic Authentication
-  hash = new Buffer( config.cloudant_key + ':' + config.cloudant_password ).toString( 'base64' );
-
-  // Store in database
-  request( {
-    method: 'POST',
-    uri: config.cloudant_uri,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Basic ' + hash
-    },
-    json: data
-  }, function( error, message, response ) {
-    // Whoops!
-    if( error ) {
-      console.log( error );
-    }
-  } );
+  io.emit( destination, data );
 } );

@@ -1,8 +1,5 @@
 var express = require( 'express' );
-var mqtt = require( 'mqtt' );
 var request = require( 'request' );
-
-// var IOT_TOPIC = 'iot-2/type/Photon/id/HDC2016/cmd/light/fmt/json';
 
 // Router
 var router = express.Router();

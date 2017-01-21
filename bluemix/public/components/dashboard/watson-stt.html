@@ -1,0 +1,82 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/SoundJS/0.6.0/soundjs.min.js"></script>
+
+<dom-module id="watson-stt">
+
+  <template>
+    <style>
+      :host {
+        display: none;
+        position: absolute;
+      }      
+    </style>
+  </template>
+
+  <script>
+    class WatsonSTT extends Polymer.Element {
+      static get is() { return 'watson-stt'; }
+
+      static get config() {
+        return {
+        	properties: {
+            transcript: String,
+            watson: Object,
+            xhr: Object
+          }
+        };
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+
+        createjs.Sound.registerSounds( [
+          {id: 'ding', src: '/audio/ding.mp3'},
+          {id: 'siri', src: '/audio/siri.mp3'}
+        ] );        
+      }
+
+      listen() {
+        this.xhr = new XMLHttpRequest();
+        this.xhr.addEventListener( 'load', evt => this.doToken( evt ) );
+        this.xhr.open( 'GET', WatsonSTT.TOKEN, true );
+        this.xhr.send( null );
+      }
+
+      doData( evt ) {
+        this.transcript = Object.assign( {}, evt );
+      }
+
+      doEnd( evt ) {
+        console.log( this.transcript );
+        console.log( this.transcript.results[0].alternatives[0].transcript );
+
+        this.dispatchEvent( new CustomEvent( WatsonSTT.TRANSCRIPT, {
+          detail: {
+            transcript: this.transcript.results[0].alternatives[0].transcript.trim()
+          }
+        } ) );
+      }
+
+      doToken( evt ) {
+        createjs.Sound.play( 'siri' );
+
+        this.watson = WatsonSpeech.SpeechToText.recognizeMicrophone( {
+          continuous: false,
+          objectMode: true,
+          token: this.xhr.responseText
+        } );    
+        this.watson.on( 'data', evt => this.doData( evt ) );
+        this.watson.on( 'end', evt => this.doEnd( evt ) );
+
+        this.xhr.removeEventListener( 'load', this.doToken );
+        this.xhr = null;
+      }
+    }
+
+    WatsonSTT.TOKEN = '/api/stt/token';
+    WatsonSTT.TRANSCRIPT = 'watson-stt-transcript';
+
+    customElements.define( WatsonSTT.is, WatsonSTT );
+  </script>
+		
+</dom-module>

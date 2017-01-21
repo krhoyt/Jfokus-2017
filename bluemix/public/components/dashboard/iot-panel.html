@@ -1,0 +1,68 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../components/dashboard/iot-history.html">
+<link rel="import" href="../../components/dashboard/iot-chart.html">
+
+<dom-module id="iot-panel">
+
+  <template>
+    <style>
+      :host {
+        display: flex;
+        flex-basis: 0;
+        flex-direction: column;
+        flex-grow: 1;        
+        margin-bottom: 50px;
+      }
+
+      h1 {
+        font-size: 27px;
+        font-weight: 300; 
+        line-height: 30px;   
+        margin: 50px 0 0 0;
+        padding: 0;
+        text-align: center;
+      }      
+
+      .icon {
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: contain;
+        height:  100px;
+        margin: 50px 0 0 0;
+      }      
+    </style>
+
+    <h1>[[title]]</h1>
+    <div class="icon" style$="background-image: url( /img/[[icon]] );"></div>
+    <iot-history id="history" current="0" maximum="0" minimum="0" units="[[units]]"></iot-history>
+    <iot-chart id="chart"></iot-chart>
+  </template>
+
+  <script>
+    class Panel extends Polymer.Element {
+      static get is() { return 'iot-panel'; }
+
+      static get config() {
+        return {
+        	properties: {
+            field: String,
+            icon: String,
+            title: String,
+            units: String
+        	}
+        };
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+      }
+
+      push( reading ) {
+        this.$.history.push( reading[this.field] );
+      }
+    }
+
+    customElements.define( Panel.is, Panel );
+  </script>
+		
+</dom-module>

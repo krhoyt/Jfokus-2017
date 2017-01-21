@@ -1,0 +1,149 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="iot-chart">
+
+  <template>
+    <style>
+      :host {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;        
+        margin-bottom: 50px;
+      }
+
+      svg {
+        flex-grow: 1;
+        margin: 50px 0 0 0;
+      }
+    </style>
+
+    <svg id="chart">
+      <g id="grid"></g>
+      <g id="plot"></g>
+    </svg>
+  </template>
+
+  <script>
+    class Chart extends Polymer.Element {
+      static get is() { return 'iot-chart'; }
+
+      static get config() {
+        return {
+        	properties: {
+            lines: Array
+        	}
+        };
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+        
+        window.addEventListener( 'resize', evt => this.doWindowResize( evt ) );
+
+        // Layout chart after attached
+        // 200ms based on informal testing
+        setTimeout( function() {
+          this.layout();
+        }.bind( this ), 200 );
+      }
+
+      layout() {
+        var group = null;
+        var line = null;
+        var value = null;
+
+        // Clean
+        // Remove existing grid lines
+        while( this.$.grid.childNodes.length > 0 ) {
+          this.$.grid.childNodes[0].remove();      
+        }    
+
+        // Top line
+        line = document.createElementNS( Chart.SVG_NAMESPACE, 'line' );
+        line.setAttributeNS( null, 'x1', 0 );
+        line.setAttributeNS( null, 'y1', 1 );
+        line.setAttributeNS( null, 'x2', this.$.grid.parentNode.clientWidth );
+        line.setAttributeNS( null, 'y2', 1 );
+        line.setAttributeNS( null, 'stroke-dasharray', '5, 5' );
+        line.setAttributeNS( null, 'stroke', 'white' );
+        line.setAttributeNS( null, 'stroke-width', 1 );
+        line.setAttributeNS( null, 'fill', 'none' );
+        line.setAttributeNS( null, 'opacity', 0.65 );
+        this.$.grid.appendChild( line );
+
+        // Bottom line
+        line = document.createElementNS( Chart.SVG_NAMESPACE, 'line' );
+        line.setAttributeNS( null, 'x1', 0 );
+        line.setAttributeNS( null, 'y1', this.$.grid.parentNode.clientHeight - 1 );
+        line.setAttributeNS( null, 'x2', this.$.grid.parentNode.clientWidth );
+        line.setAttributeNS( null, 'y2', this.$.grid.parentNode.clientHeight - 1 );
+        line.setAttributeNS( null, 'stroke-dasharray', '5, 5' );
+        line.setAttributeNS( null, 'stroke', 'white' );
+        line.setAttributeNS( null, 'stroke-width', 1 );
+        line.setAttributeNS( null, 'fill', 'none' );
+        line.setAttributeNS( null, 'opacity', 0.65 );
+        this.$.grid.appendChild( line );      
+
+        // Divider grid lines
+        for( var g = 20; g < 100; g = g + 20 ) {
+          // Grouped
+          // Not necessary
+          // More inline with SVG behaviors
+          group = document.createElementNS( Chart.SVG_NAMESPACE, 'g' );
+
+          // Line from left to middle
+          line = document.createElementNS( Chart.SVG_NAMESPACE, 'line' );
+          line.setAttributeNS( null, 'x1', 0 );
+          line.setAttributeNS( null, 'y1', this.$.grid.parentNode.clientHeight * ( g / 100 ) );
+          line.setAttributeNS( null, 'x2', ( this.$.grid.parentNode.clientWidth / 2 ) - 25 );
+          line.setAttributeNS( null, 'y2', this.$.grid.parentNode.clientHeight * ( g / 100 ) );
+          line.setAttributeNS( null, 'stroke-dasharray', '5, 5' );
+          line.setAttributeNS( null, 'stroke', 'white' );
+          line.setAttributeNS( null, 'stroke-width', 1 );
+          line.setAttributeNS( null, 'fill', 'none' );
+          line.setAttributeNS( null, 'opacity', 0.65 );
+          group.appendChild( line );
+
+          // Value this line indicates
+          // Placed in middle of viewport
+          value = document.createElementNS( Chart.SVG_NAMESPACE, 'text' );
+          value.textContent = ( 100 - g );
+          value.setAttributeNS( null, 'font-size', 18 );
+          value.setAttributeNS( null, 'font-weight', 300 );
+          value.setAttributeNS( null, 'fill', 'white' );
+          value.setAttributeNS( null, 'opacity', 0.65 );
+          value.setAttributeNS( null, 'text-anchor', 'middle' );        
+          value.setAttributeNS( null, 'alignment-baseline', 'middle' );                
+          value.setAttributeNS( null, 'x', this.$.grid.parentNode.clientWidth / 2 );
+          value.setAttributeNS( null, 'y', this.$.grid.parentNode.clientHeight * ( g / 100 ) );
+          group.appendChild( value );
+
+          // Line from middle to right
+          line = document.createElementNS( Chart.SVG_NAMESPACE, 'line' );
+          line.setAttributeNS( null, 'x1', ( this.$.grid.parentNode.clientWidth / 2 ) + 25 );
+          line.setAttributeNS( null, 'y1', this.$.grid.parentNode.clientHeight * ( g / 100 ) );
+          line.setAttributeNS( null, 'x2', this.$.grid.parentNode.clientWidth );
+          line.setAttributeNS( null, 'y2', this.$.grid.parentNode.clientHeight * ( g / 100 ) );
+          line.setAttributeNS( null, 'stroke-dasharray', '5, 5' );
+          line.setAttributeNS( null, 'stroke', 'white' );
+          line.setAttributeNS( null, 'stroke-width', 1 );
+          line.setAttributeNS( null, 'fill', 'none' );
+          line.setAttributeNS( null, 'opacity', 0.65 );
+          group.appendChild( line );
+
+          // Add line group to grid group
+          this.$.grid.appendChild( group );
+        }        
+      }
+
+      doWindowResize( evt ) {
+        this.layout();
+      }
+    }
+
+    Chart.SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+
+    customElements.define( Chart.is, Chart );
+  </script>
+		
+</dom-module>

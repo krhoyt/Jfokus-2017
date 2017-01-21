@@ -36,7 +36,7 @@
  *
  * envify automatically rewrites this during the release process
  */
-exports.version = "v0.27.0";
+exports.version = "v0.30.1";
 
 /**
  *
@@ -52,7 +52,7 @@ exports.TextToSpeech = require('./text-to-speech');
 
 
 
-},{"./speech-to-text":54,"./text-to-speech":66}],2:[function(require,module,exports){
+},{"./speech-to-text":60,"./text-to-speech":72}],2:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -3025,6 +3025,12 @@ module.exports = Function.prototype.bind || implementation;
     }
   }
 
+  var isPromiseSupported = typeof Promise !== 'undefined';
+  // gump = mondern promise-based interface
+  // gum = old callback-based interface
+  var gump = navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
+  var gum = navigator && navigator.getUserMedia || navigator.webkitGetUserMedia ||  navigator.mozGetUserMedia || navigator.msGetUserMedia;
+
   /**
    * Wrapper for navigator.mediaDevices.getUserMedia.
    * Always returns a Promise or Promise-like object, even in environments without a global Promise constructor
@@ -3038,13 +3044,13 @@ module.exports = Function.prototype.bind || implementation;
      */
   function getUserMedia(constraints) {
     // ensure that Promises are supported and we have a navigator object
-    if (typeof Promise === 'undefined') {
+    if (!isPromiseSupported) {
       return new FakePromise();
     }
 
     // Try the more modern, promise-based MediaDevices API first
     //https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
-    if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    if(gump) {
       return navigator.mediaDevices.getUserMedia(constraints);
     }
 
@@ -3052,7 +3058,7 @@ module.exports = Function.prototype.bind || implementation;
     return new Promise(function(resolve, reject) {
       // if navigator doesn't exist, then we can't use the getUserMedia API. (And probably aren't even in a browser.)
       // assuming it does, try getUserMedia and then all of the prefixed versions
-      var gum = navigator && navigator.getUserMedia || navigator.webkitGetUserMedia ||  navigator.mozGetUserMedia || navigator.msGetUserMedia;
+
       if (!gum) {
         return reject(new NotSupportedError())
       }
@@ -3061,6 +3067,9 @@ module.exports = Function.prototype.bind || implementation;
   }
 
   getUserMedia.NotSupportedError = NotSupportedError;
+
+  // eslint-disable-next-line no-implicit-coercion
+  getUserMedia.isSupported = !!(isPromiseSupported && (gump || gum));
 
   // UMD, loosely based on https://github.com/umdjs/umd/blob/master/templates/returnExportsGlobal.js
   if (typeof define === 'function' && define.amd) {
@@ -3075,7 +3084,8 @@ module.exports = Function.prototype.bind || implementation;
     module.exports = getUserMedia;
   } else {
     // Browser globals
-    // pollyfill the MediaDevices API if it does not exist.
+    // polyfill the MediaDevices API if it does not exist.
+    root.navigator = root.navigator || {};
     root.nagivator.mediaDevices = root.navigator.mediaDevices || {};
     root.nagivator.mediaDevices.getUserMedia = root.nagivator.mediaDevices.getUserMedia || getUserMedia;
   }
@@ -3239,6 +3249,14 @@ module.exports = function isObject(val) {
 };
 
 },{"isarray":17}],19:[function(require,module,exports){
+// the whatwg-fetch polyfill installs the fetch() function
+// on the global object (window or self)
+//
+// Return that as the export for use in Webpack, Browserify etc.
+require('whatwg-fetch');
+module.exports = self.fetch.bind(self);
+
+},{"whatwg-fetch":55}],20:[function(require,module,exports){
 /**
  * lodash (Custom Build) <https://lodash.com/>
  * Build: `lodash modularize exports="npm" -o ./`
@@ -3455,7 +3473,7 @@ function pullAllWith(array, values, comparator) {
 
 module.exports = pullAllWith;
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 (function (process,Buffer){
 'use strict';
 var Readable = require('stream').Readable;
@@ -3570,7 +3588,121 @@ MicrophoneStream.toRaw = function toFloat32(chunk) {
 module.exports = MicrophoneStream;
 
 }).call(this,require('_process'),require("buffer").Buffer)
-},{"_process":28,"buffer":5,"stream":41,"util":46}],21:[function(require,module,exports){
+},{"_process":33,"buffer":5,"stream":46,"util":51}],22:[function(require,module,exports){
+var isoFetch = require('isomorphic-fetch')
+var patchRequest = require('./lib/patch-request')
+var patchResponse = require('./lib/patch-response')
+
+function fetch (url, options) {
+  return patchRequest(options).then(function (options) {
+    return isoFetch(url, options).then(function (res) {
+      return patchResponse(res)
+    })
+  })
+}
+
+module.exports = fetch
+
+},{"./lib/patch-request":23,"./lib/patch-response":24,"isomorphic-fetch":19}],23:[function(require,module,exports){
+(function (Buffer){
+function patch (options) {
+  options = options || {}
+
+  if (options.body && options.body.readable) {
+    return new Promise(function (resolve, reject) {
+      var content = []
+
+      options.body.on('error', reject)
+      options.body.on('end', function () {
+        options.body = Buffer.concat(content)
+
+        resolve(options)
+      })
+
+      options.body.on('data', function (chunk) {
+        content.push(new Buffer(chunk))
+      })
+    })
+  } else {
+    return Promise.resolve(options)
+  }
+}
+
+module.exports = patch
+
+}).call(this,require("buffer").Buffer)
+},{"buffer":5}],24:[function(require,module,exports){
+(function (Buffer){
+var Readable = require('stream').Readable
+var ReadableFromWhatwg = require('./readable-from-whatwg')
+
+function patch (res) {
+  res.body = res.body || {}
+
+  if (res.body.getReader) {
+    res.body.getReadable = function () {
+      return new ReadableFromWhatwg(res.body.getReader())
+    }
+  } else {
+    res.body.getReadable = function () {
+      if (res.body.readable) {
+        return res.body
+      } else {
+        var readable = new Readable()
+
+        readable._read = function () {
+          if (res.bodyUsed) {
+            return
+          }
+
+          res.arrayBuffer().then(function (data) {
+            readable.push(new Buffer(data))
+            readable.push(null)
+          }).catch(function (err) {
+            readable.emit('error', err)
+          })
+        }
+
+        return readable
+      }
+    }
+  }
+
+  return res
+}
+
+module.exports = patch
+
+}).call(this,require("buffer").Buffer)
+},{"./readable-from-whatwg":25,"buffer":5,"stream":46}],25:[function(require,module,exports){
+(function (Buffer){
+var inherits = require('inherits')
+var Readable = require('stream').Readable
+
+function ReadableFromWhatwg (stream) {
+  var self = this
+
+  Readable.call(this)
+
+  this._read = function () {
+    stream.read().then(function (chunk) {
+      if (chunk.done) {
+        self.push(null)
+      } else {
+        self.push(new Buffer(chunk.value))
+      }
+    }).catch(function (err) {
+      self.emit('error', err)
+    })
+  }
+}
+
+inherits(ReadableFromWhatwg, Readable)
+
+module.exports = ReadableFromWhatwg
+
+}).call(this,require("buffer").Buffer)
+},{"buffer":5,"inherits":15,"stream":46}],26:[function(require,module,exports){
 'use strict';
 
 // modified from https://github.com/es-shims/es5-shim
@@ -3712,7 +3844,7 @@ keysShim.shim = function shimObjectKeys() {
 
 module.exports = keysShim;
 
-},{"./isArguments":22}],22:[function(require,module,exports){
+},{"./isArguments":27}],27:[function(require,module,exports){
 'use strict';
 
 var toStr = Object.prototype.toString;
@@ -3731,7 +3863,7 @@ module.exports = function isArguments(value) {
 	return isArgs;
 };
 
-},{}],23:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 'use strict';
 
 var keys = require('object-keys');
@@ -3774,7 +3906,7 @@ module.exports = function hasSymbols() {
 	return true;
 };
 
-},{"object-keys":21}],24:[function(require,module,exports){
+},{"object-keys":26}],29:[function(require,module,exports){
 'use strict';
 
 // modified from https://github.com/es-shims/es6-shim
@@ -3817,7 +3949,7 @@ module.exports = function assign(target, source1) {
 	return objTarget;
 };
 
-},{"./hasSymbols":23,"function-bind":12,"object-keys":21}],25:[function(require,module,exports){
+},{"./hasSymbols":28,"function-bind":12,"object-keys":26}],30:[function(require,module,exports){
 'use strict';
 
 var implementation = require('./implementation');
@@ -3870,7 +4002,7 @@ module.exports = function getPolyfill() {
 	return Object.assign;
 };
 
-},{"./implementation":24}],26:[function(require,module,exports){
+},{"./implementation":29}],31:[function(require,module,exports){
 /*!
  * object.pick <https://github.com/jonschlinkert/object.pick>
  *
@@ -3907,7 +4039,7 @@ module.exports = function pick(obj, keys) {
   return res;
 };
 
-},{"isobject":18}],27:[function(require,module,exports){
+},{"isobject":18}],32:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -3954,7 +4086,7 @@ function nextTick(fn, arg1, arg2, arg3) {
 }
 
 }).call(this,require('_process'))
-},{"_process":28}],28:[function(require,module,exports){
+},{"_process":33}],33:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -4136,7 +4268,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],29:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 (function (global,Buffer){
 'use strict';
 
@@ -4274,10 +4406,10 @@ ReadableBlobStream.prototype._read = function(chunkSize)
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
-},{"buffer":5,"inherits":15,"stream":41}],30:[function(require,module,exports){
+},{"buffer":5,"inherits":15,"stream":46}],35:[function(require,module,exports){
 module.exports = require("./lib/_stream_duplex.js")
 
-},{"./lib/_stream_duplex.js":31}],31:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":36}],36:[function(require,module,exports){
 // a duplex stream is just a stream that is both readable and writable.
 // Since JS doesn't have multiple prototypal inheritance, this class
 // prototypally inherits from Readable, and then parasitically from
@@ -4353,7 +4485,7 @@ function forEach(xs, f) {
     f(xs[i], i);
   }
 }
-},{"./_stream_readable":33,"./_stream_writable":35,"core-util-is":7,"inherits":15,"process-nextick-args":27}],32:[function(require,module,exports){
+},{"./_stream_readable":38,"./_stream_writable":40,"core-util-is":7,"inherits":15,"process-nextick-args":32}],37:[function(require,module,exports){
 // a passthrough stream.
 // basically just the most minimal sort of Transform stream.
 // Every written chunk gets output as-is.
@@ -4380,7 +4512,7 @@ function PassThrough(options) {
 PassThrough.prototype._transform = function (chunk, encoding, cb) {
   cb(null, chunk);
 };
-},{"./_stream_transform":34,"core-util-is":7,"inherits":15}],33:[function(require,module,exports){
+},{"./_stream_transform":39,"core-util-is":7,"inherits":15}],38:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -5324,7 +5456,7 @@ function indexOf(xs, x) {
   return -1;
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":31,"./internal/streams/BufferList":36,"_process":28,"buffer":5,"buffer-shims":4,"core-util-is":7,"events":10,"inherits":15,"isarray":17,"process-nextick-args":27,"string_decoder/":42,"util":3}],34:[function(require,module,exports){
+},{"./_stream_duplex":36,"./internal/streams/BufferList":41,"_process":33,"buffer":5,"buffer-shims":4,"core-util-is":7,"events":10,"inherits":15,"isarray":17,"process-nextick-args":32,"string_decoder/":47,"util":3}],39:[function(require,module,exports){
 // a transform stream is a readable/writable stream where you do
 // something with the data.  Sometimes it's called a "filter",
 // but that's not a great name for it, since that implies a thing where
@@ -5507,7 +5639,7 @@ function done(stream, er, data) {
 
   return stream.push(null);
 }
-},{"./_stream_duplex":31,"core-util-is":7,"inherits":15}],35:[function(require,module,exports){
+},{"./_stream_duplex":36,"core-util-is":7,"inherits":15}],40:[function(require,module,exports){
 (function (process){
 // A bit simpler than readable streams.
 // Implement an async ._write(chunk, encoding, cb), and it'll handle all
@@ -6064,7 +6196,7 @@ function CorkedRequest(state) {
   };
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":31,"_process":28,"buffer":5,"buffer-shims":4,"core-util-is":7,"events":10,"inherits":15,"process-nextick-args":27,"util-deprecate":43}],36:[function(require,module,exports){
+},{"./_stream_duplex":36,"_process":33,"buffer":5,"buffer-shims":4,"core-util-is":7,"events":10,"inherits":15,"process-nextick-args":32,"util-deprecate":48}],41:[function(require,module,exports){
 'use strict';
 
 var Buffer = require('buffer').Buffer;
@@ -6129,10 +6261,10 @@ BufferList.prototype.concat = function (n) {
   }
   return ret;
 };
-},{"buffer":5,"buffer-shims":4}],37:[function(require,module,exports){
+},{"buffer":5,"buffer-shims":4}],42:[function(require,module,exports){
 module.exports = require("./lib/_stream_passthrough.js")
 
-},{"./lib/_stream_passthrough.js":32}],38:[function(require,module,exports){
+},{"./lib/_stream_passthrough.js":37}],43:[function(require,module,exports){
 (function (process){
 var Stream = (function (){
   try {
@@ -6152,13 +6284,13 @@ if (!process.browser && process.env.READABLE_STREAM === 'disable' && Stream) {
 }
 
 }).call(this,require('_process'))
-},{"./lib/_stream_duplex.js":31,"./lib/_stream_passthrough.js":32,"./lib/_stream_readable.js":33,"./lib/_stream_transform.js":34,"./lib/_stream_writable.js":35,"_process":28}],39:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":36,"./lib/_stream_passthrough.js":37,"./lib/_stream_readable.js":38,"./lib/_stream_transform.js":39,"./lib/_stream_writable.js":40,"_process":33}],44:[function(require,module,exports){
 module.exports = require("./lib/_stream_transform.js")
 
-},{"./lib/_stream_transform.js":34}],40:[function(require,module,exports){
+},{"./lib/_stream_transform.js":39}],45:[function(require,module,exports){
 module.exports = require("./lib/_stream_writable.js")
 
-},{"./lib/_stream_writable.js":35}],41:[function(require,module,exports){
+},{"./lib/_stream_writable.js":40}],46:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -6287,7 +6419,7 @@ Stream.prototype.pipe = function(dest, options) {
   return dest;
 };
 
-},{"events":10,"inherits":15,"readable-stream/duplex.js":30,"readable-stream/passthrough.js":37,"readable-stream/readable.js":38,"readable-stream/transform.js":39,"readable-stream/writable.js":40}],42:[function(require,module,exports){
+},{"events":10,"inherits":15,"readable-stream/duplex.js":35,"readable-stream/passthrough.js":42,"readable-stream/readable.js":43,"readable-stream/transform.js":44,"readable-stream/writable.js":45}],47:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -6510,7 +6642,7 @@ function base64DetectIncompleteChar(buffer) {
   this.charLength = this.charReceived ? 3 : 0;
 }
 
-},{"buffer":5}],43:[function(require,module,exports){
+},{"buffer":5}],48:[function(require,module,exports){
 (function (global){
 
 /**
@@ -6581,16 +6713,16 @@ function config (name) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],44:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 arguments[4][15][0].apply(exports,arguments)
-},{"dup":15}],45:[function(require,module,exports){
+},{"dup":15}],50:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],46:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -7180,9 +7312,9 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":45,"_process":28,"inherits":44}],47:[function(require,module,exports){
+},{"./support/isBuffer":50,"_process":33,"inherits":49}],52:[function(require,module,exports){
 var _global = (function() { return this; })();
-var nativeWebSocket = _global.WebSocket || _global.MozWebSocket;
+var NativeWebSocket = _global.WebSocket || _global.MozWebSocket;
 var websocket_version = require('./version');
 
 
@@ -7193,10 +7325,10 @@ function W3CWebSocket(uri, protocols) {
 	var native_instance;
 
 	if (protocols) {
-		native_instance = new nativeWebSocket(uri, protocols);
+		native_instance = new NativeWebSocket(uri, protocols);
 	}
 	else {
-		native_instance = new nativeWebSocket(uri);
+		native_instance = new NativeWebSocket(uri);
 	}
 
 	/**
@@ -7214,61 +7346,61 @@ function W3CWebSocket(uri, protocols) {
  * Module exports.
  */
 module.exports = {
-    'w3cwebsocket' : nativeWebSocket ? W3CWebSocket : null,
+    'w3cwebsocket' : NativeWebSocket ? W3CWebSocket : null,
     'version'      : websocket_version
 };
 
-},{"./version":48}],48:[function(require,module,exports){
+},{"./version":53}],53:[function(require,module,exports){
 module.exports = require('../package.json').version;
 
-},{"../package.json":49}],49:[function(require,module,exports){
+},{"../package.json":54}],54:[function(require,module,exports){
 module.exports={
   "_args": [
     [
       {
-        "raw": "websocket@^1.0.22",
+        "raw": "websocket@^1.0.24",
         "scope": null,
         "escapedName": "websocket",
         "name": "websocket",
-        "rawSpec": "^1.0.22",
-        "spec": ">=1.0.22 <2.0.0",
+        "rawSpec": "^1.0.24",
+        "spec": ">=1.0.24 <2.0.0",
         "type": "range"
       },
       "/home/travis/build/watson-developer-cloud/speech-javascript-sdk"
     ]
   ],
-  "_from": "websocket@>=1.0.22 <2.0.0",
-  "_id": "websocket@1.0.23",
+  "_from": "websocket@>=1.0.24 <2.0.0",
+  "_id": "websocket@1.0.24",
   "_inCache": true,
   "_location": "/websocket",
-  "_nodeVersion": "0.10.45",
+  "_nodeVersion": "7.3.0",
   "_npmOperationalInternal": {
-    "host": "packages-16-east.internal.npmjs.com",
-    "tmp": "tmp/websocket-1.0.23.tgz_1463625793005_0.4532310354989022"
+    "host": "packages-12-west.internal.npmjs.com",
+    "tmp": "tmp/websocket-1.0.24.tgz_1482977757939_0.1858439394272864"
   },
   "_npmUser": {
     "name": "theturtle32",
     "email": "brian@worlize.com"
   },
-  "_npmVersion": "2.15.1",
+  "_npmVersion": "3.10.10",
   "_phantomChildren": {},
   "_requested": {
-    "raw": "websocket@^1.0.22",
+    "raw": "websocket@^1.0.24",
     "scope": null,
     "escapedName": "websocket",
     "name": "websocket",
-    "rawSpec": "^1.0.22",
-    "spec": ">=1.0.22 <2.0.0",
+    "rawSpec": "^1.0.24",
+    "spec": ">=1.0.24 <2.0.0",
     "type": "range"
   },
   "_requiredBy": [
     "/",
     "/watson-developer-cloud"
   ],
-  "_resolved": "https://registry.npmjs.org/websocket/-/websocket-1.0.23.tgz",
-  "_shasum": "20de8ec4a7126b09465578cd5dbb29a9c296aac6",
+  "_resolved": "https://registry.npmjs.org/websocket/-/websocket-1.0.24.tgz",
+  "_shasum": "74903e75f2545b6b2e1de1425bc1c905917a1890",
   "_shrinkwrap": null,
-  "_spec": "websocket@^1.0.22",
+  "_spec": "websocket@^1.0.24",
   "_where": "/home/travis/build/watson-developer-cloud/speech-javascript-sdk",
   "author": {
     "name": "Brian McKelvey",
@@ -7293,28 +7425,29 @@ module.exports={
     "debug": "^2.2.0",
     "nan": "^2.3.3",
     "typedarray-to-buffer": "^3.1.2",
-    "yaeti": "^0.0.4"
+    "yaeti": "^0.0.6"
   },
   "description": "Websocket Client & Server Library implementing the WebSocket protocol as specified in RFC 6455.",
   "devDependencies": {
-    "buffer-equal": "^0.0.1",
+    "buffer-equal": "^1.0.0",
     "faucet": "^0.0.1",
     "gulp": "git+https://github.com/gulpjs/gulp.git#4.0",
-    "gulp-jshint": "^1.11.2",
-    "jshint-stylish": "^1.0.2",
+    "gulp-jshint": "^2.0.4",
+    "jshint": "^2.0.0",
+    "jshint-stylish": "^2.2.1",
     "tape": "^4.0.1"
   },
   "directories": {
     "lib": "./lib"
   },
   "dist": {
-    "shasum": "20de8ec4a7126b09465578cd5dbb29a9c296aac6",
-    "tarball": "https://registry.npmjs.org/websocket/-/websocket-1.0.23.tgz"
+    "shasum": "74903e75f2545b6b2e1de1425bc1c905917a1890",
+    "tarball": "https://registry.npmjs.org/websocket/-/websocket-1.0.24.tgz"
   },
   "engines": {
     "node": ">=0.8.0"
   },
-  "gitHead": "ba2fa7e9676c456bcfb12ad160655319af66faed",
+  "gitHead": "0e15f9445953927c39ce84a232cb7dd6e3adf12e",
   "homepage": "https://github.com/theturtle32/WebSocket-Node",
   "keywords": [
     "websocket",
@@ -7348,10 +7481,470 @@ module.exports={
     "install": "(node-gyp rebuild 2> builderror.log) || (exit 0)",
     "test": "faucet test/unit"
   },
-  "version": "1.0.23"
+  "version": "1.0.24"
 }
 
-},{}],50:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
+(function(self) {
+  'use strict';
+
+  if (self.fetch) {
+    return
+  }
+
+  var support = {
+    searchParams: 'URLSearchParams' in self,
+    iterable: 'Symbol' in self && 'iterator' in Symbol,
+    blob: 'FileReader' in self && 'Blob' in self && (function() {
+      try {
+        new Blob()
+        return true
+      } catch(e) {
+        return false
+      }
+    })(),
+    formData: 'FormData' in self,
+    arrayBuffer: 'ArrayBuffer' in self
+  }
+
+  if (support.arrayBuffer) {
+    var viewClasses = [
+      '[object Int8Array]',
+      '[object Uint8Array]',
+      '[object Uint8ClampedArray]',
+      '[object Int16Array]',
+      '[object Uint16Array]',
+      '[object Int32Array]',
+      '[object Uint32Array]',
+      '[object Float32Array]',
+      '[object Float64Array]'
+    ]
+
+    var isDataView = function(obj) {
+      return obj && DataView.prototype.isPrototypeOf(obj)
+    }
+
+    var isArrayBufferView = ArrayBuffer.isView || function(obj) {
+      return obj && viewClasses.indexOf(Object.prototype.toString.call(obj)) > -1
+    }
+  }
+
+  function normalizeName(name) {
+    if (typeof name !== 'string') {
+      name = String(name)
+    }
+    if (/[^a-z0-9\-#$%&'*+.\^_`|~]/i.test(name)) {
+      throw new TypeError('Invalid character in header field name')
+    }
+    return name.toLowerCase()
+  }
+
+  function normalizeValue(value) {
+    if (typeof value !== 'string') {
+      value = String(value)
+    }
+    return value
+  }
+
+  // Build a destructive iterator for the value list
+  function iteratorFor(items) {
+    var iterator = {
+      next: function() {
+        var value = items.shift()
+        return {done: value === undefined, value: value}
+      }
+    }
+
+    if (support.iterable) {
+      iterator[Symbol.iterator] = function() {
+        return iterator
+      }
+    }
+
+    return iterator
+  }
+
+  function Headers(headers) {
+    this.map = {}
+
+    if (headers instanceof Headers) {
+      headers.forEach(function(value, name) {
+        this.append(name, value)
+      }, this)
+
+    } else if (headers) {
+      Object.getOwnPropertyNames(headers).forEach(function(name) {
+        this.append(name, headers[name])
+      }, this)
+    }
+  }
+
+  Headers.prototype.append = function(name, value) {
+    name = normalizeName(name)
+    value = normalizeValue(value)
+    var oldValue = this.map[name]
+    this.map[name] = oldValue ? oldValue+','+value : value
+  }
+
+  Headers.prototype['delete'] = function(name) {
+    delete this.map[normalizeName(name)]
+  }
+
+  Headers.prototype.get = function(name) {
+    name = normalizeName(name)
+    return this.has(name) ? this.map[name] : null
+  }
+
+  Headers.prototype.has = function(name) {
+    return this.map.hasOwnProperty(normalizeName(name))
+  }
+
+  Headers.prototype.set = function(name, value) {
+    this.map[normalizeName(name)] = normalizeValue(value)
+  }
+
+  Headers.prototype.forEach = function(callback, thisArg) {
+    for (var name in this.map) {
+      if (this.map.hasOwnProperty(name)) {
+        callback.call(thisArg, this.map[name], name, this)
+      }
+    }
+  }
+
+  Headers.prototype.keys = function() {
+    var items = []
+    this.forEach(function(value, name) { items.push(name) })
+    return iteratorFor(items)
+  }
+
+  Headers.prototype.values = function() {
+    var items = []
+    this.forEach(function(value) { items.push(value) })
+    return iteratorFor(items)
+  }
+
+  Headers.prototype.entries = function() {
+    var items = []
+    this.forEach(function(value, name) { items.push([name, value]) })
+    return iteratorFor(items)
+  }
+
+  if (support.iterable) {
+    Headers.prototype[Symbol.iterator] = Headers.prototype.entries
+  }
+
+  function consumed(body) {
+    if (body.bodyUsed) {
+      return Promise.reject(new TypeError('Already read'))
+    }
+    body.bodyUsed = true
+  }
+
+  function fileReaderReady(reader) {
+    return new Promise(function(resolve, reject) {
+      reader.onload = function() {
+        resolve(reader.result)
+      }
+      reader.onerror = function() {
+        reject(reader.error)
+      }
+    })
+  }
+
+  function readBlobAsArrayBuffer(blob) {
+    var reader = new FileReader()
+    var promise = fileReaderReady(reader)
+    reader.readAsArrayBuffer(blob)
+    return promise
+  }
+
+  function readBlobAsText(blob) {
+    var reader = new FileReader()
+    var promise = fileReaderReady(reader)
+    reader.readAsText(blob)
+    return promise
+  }
+
+  function readArrayBufferAsText(buf) {
+    var view = new Uint8Array(buf)
+    var chars = new Array(view.length)
+
+    for (var i = 0; i < view.length; i++) {
+      chars[i] = String.fromCharCode(view[i])
+    }
+    return chars.join('')
+  }
+
+  function bufferClone(buf) {
+    if (buf.slice) {
+      return buf.slice(0)
+    } else {
+      var view = new Uint8Array(buf.byteLength)
+      view.set(new Uint8Array(buf))
+      return view.buffer
+    }
+  }
+
+  function Body() {
+    this.bodyUsed = false
+
+    this._initBody = function(body) {
+      this._bodyInit = body
+      if (!body) {
+        this._bodyText = ''
+      } else if (typeof body === 'string') {
+        this._bodyText = body
+      } else if (support.blob && Blob.prototype.isPrototypeOf(body)) {
+        this._bodyBlob = body
+      } else if (support.formData && FormData.prototype.isPrototypeOf(body)) {
+        this._bodyFormData = body
+      } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
+        this._bodyText = body.toString()
+      } else if (support.arrayBuffer && support.blob && isDataView(body)) {
+        this._bodyArrayBuffer = bufferClone(body.buffer)
+        // IE 10-11 can't handle a DataView body.
+        this._bodyInit = new Blob([this._bodyArrayBuffer])
+      } else if (support.arrayBuffer && (ArrayBuffer.prototype.isPrototypeOf(body) || isArrayBufferView(body))) {
+        this._bodyArrayBuffer = bufferClone(body)
+      } else {
+        throw new Error('unsupported BodyInit type')
+      }
+
+      if (!this.headers.get('content-type')) {
+        if (typeof body === 'string') {
+          this.headers.set('content-type', 'text/plain;charset=UTF-8')
+        } else if (this._bodyBlob && this._bodyBlob.type) {
+          this.headers.set('content-type', this._bodyBlob.type)
+        } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
+          this.headers.set('content-type', 'application/x-www-form-urlencoded;charset=UTF-8')
+        }
+      }
+    }
+
+    if (support.blob) {
+      this.blob = function() {
+        var rejected = consumed(this)
+        if (rejected) {
+          return rejected
+        }
+
+        if (this._bodyBlob) {
+          return Promise.resolve(this._bodyBlob)
+        } else if (this._bodyArrayBuffer) {
+          return Promise.resolve(new Blob([this._bodyArrayBuffer]))
+        } else if (this._bodyFormData) {
+          throw new Error('could not read FormData body as blob')
+        } else {
+          return Promise.resolve(new Blob([this._bodyText]))
+        }
+      }
+
+      this.arrayBuffer = function() {
+        if (this._bodyArrayBuffer) {
+          return consumed(this) || Promise.resolve(this._bodyArrayBuffer)
+        } else {
+          return this.blob().then(readBlobAsArrayBuffer)
+        }
+      }
+    }
+
+    this.text = function() {
+      var rejected = consumed(this)
+      if (rejected) {
+        return rejected
+      }
+
+      if (this._bodyBlob) {
+        return readBlobAsText(this._bodyBlob)
+      } else if (this._bodyArrayBuffer) {
+        return Promise.resolve(readArrayBufferAsText(this._bodyArrayBuffer))
+      } else if (this._bodyFormData) {
+        throw new Error('could not read FormData body as text')
+      } else {
+        return Promise.resolve(this._bodyText)
+      }
+    }
+
+    if (support.formData) {
+      this.formData = function() {
+        return this.text().then(decode)
+      }
+    }
+
+    this.json = function() {
+      return this.text().then(JSON.parse)
+    }
+
+    return this
+  }
+
+  // HTTP methods whose capitalization should be normalized
+  var methods = ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'POST', 'PUT']
+
+  function normalizeMethod(method) {
+    var upcased = method.toUpperCase()
+    return (methods.indexOf(upcased) > -1) ? upcased : method
+  }
+
+  function Request(input, options) {
+    options = options || {}
+    var body = options.body
+
+    if (typeof input === 'string') {
+      this.url = input
+    } else {
+      if (input.bodyUsed) {
+        throw new TypeError('Already read')
+      }
+      this.url = input.url
+      this.credentials = input.credentials
+      if (!options.headers) {
+        this.headers = new Headers(input.headers)
+      }
+      this.method = input.method
+      this.mode = input.mode
+      if (!body && input._bodyInit != null) {
+        body = input._bodyInit
+        input.bodyUsed = true
+      }
+    }
+
+    this.credentials = options.credentials || this.credentials || 'omit'
+    if (options.headers || !this.headers) {
+      this.headers = new Headers(options.headers)
+    }
+    this.method = normalizeMethod(options.method || this.method || 'GET')
+    this.mode = options.mode || this.mode || null
+    this.referrer = null
+
+    if ((this.method === 'GET' || this.method === 'HEAD') && body) {
+      throw new TypeError('Body not allowed for GET or HEAD requests')
+    }
+    this._initBody(body)
+  }
+
+  Request.prototype.clone = function() {
+    return new Request(this, { body: this._bodyInit })
+  }
+
+  function decode(body) {
+    var form = new FormData()
+    body.trim().split('&').forEach(function(bytes) {
+      if (bytes) {
+        var split = bytes.split('=')
+        var name = split.shift().replace(/\+/g, ' ')
+        var value = split.join('=').replace(/\+/g, ' ')
+        form.append(decodeURIComponent(name), decodeURIComponent(value))
+      }
+    })
+    return form
+  }
+
+  function parseHeaders(rawHeaders) {
+    var headers = new Headers()
+    rawHeaders.split('\r\n').forEach(function(line) {
+      var parts = line.split(':')
+      var key = parts.shift().trim()
+      if (key) {
+        var value = parts.join(':').trim()
+        headers.append(key, value)
+      }
+    })
+    return headers
+  }
+
+  Body.call(Request.prototype)
+
+  function Response(bodyInit, options) {
+    if (!options) {
+      options = {}
+    }
+
+    this.type = 'default'
+    this.status = 'status' in options ? options.status : 200
+    this.ok = this.status >= 200 && this.status < 300
+    this.statusText = 'statusText' in options ? options.statusText : 'OK'
+    this.headers = new Headers(options.headers)
+    this.url = options.url || ''
+    this._initBody(bodyInit)
+  }
+
+  Body.call(Response.prototype)
+
+  Response.prototype.clone = function() {
+    return new Response(this._bodyInit, {
+      status: this.status,
+      statusText: this.statusText,
+      headers: new Headers(this.headers),
+      url: this.url
+    })
+  }
+
+  Response.error = function() {
+    var response = new Response(null, {status: 0, statusText: ''})
+    response.type = 'error'
+    return response
+  }
+
+  var redirectStatuses = [301, 302, 303, 307, 308]
+
+  Response.redirect = function(url, status) {
+    if (redirectStatuses.indexOf(status) === -1) {
+      throw new RangeError('Invalid status code')
+    }
+
+    return new Response(null, {status: status, headers: {location: url}})
+  }
+
+  self.Headers = Headers
+  self.Request = Request
+  self.Response = Response
+
+  self.fetch = function(input, init) {
+    return new Promise(function(resolve, reject) {
+      var request = new Request(input, init)
+      var xhr = new XMLHttpRequest()
+
+      xhr.onload = function() {
+        var options = {
+          status: xhr.status,
+          statusText: xhr.statusText,
+          headers: parseHeaders(xhr.getAllResponseHeaders() || '')
+        }
+        options.url = 'responseURL' in xhr ? xhr.responseURL : options.headers.get('X-Request-URL')
+        var body = 'response' in xhr ? xhr.response : xhr.responseText
+        resolve(new Response(body, options))
+      }
+
+      xhr.onerror = function() {
+        reject(new TypeError('Network request failed'))
+      }
+
+      xhr.ontimeout = function() {
+        reject(new TypeError('Network request failed'))
+      }
+
+      xhr.open(request.method, request.url, true)
+
+      if (request.credentials === 'include') {
+        xhr.withCredentials = true
+      }
+
+      if ('responseType' in xhr && support.blob) {
+        xhr.responseType = 'blob'
+      }
+
+      request.headers.forEach(function(value, name) {
+        xhr.setRequestHeader(name, value)
+      })
+
+      xhr.send(typeof request._bodyInit === 'undefined' ? null : request._bodyInit)
+    })
+  }
+  self.fetch.polyfill = true
+})(typeof self !== 'undefined' ? self : this);
+
+},{}],56:[function(require,module,exports){
 'use strict';
 
 // these are the only content-types currently supported by the speech-to-tet service
@@ -7371,10 +7964,29 @@ module.exports = function contentType(header) {
   return contentTypes[header];
 };
 
-},{}],51:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 'use strict';
 
 var getContentTypeFromHeader = require('./content-type');
+
+/**
+ * Plays audio from a URL
+ * Compatible with Mobile Safari if triggered in direct response to a user interaction (e.g. click)
+ * @param {String} url
+ * @constructor
+ */
+function UrlPlayer(url) {
+  var audio = this.audio = new Audio();
+  audio.src = url;
+  audio.play();
+  /**
+   * Stops the audio
+   */
+  this.stop = function stop() {
+    audio.pause();
+    audio.currentTime = 0;
+  };
+}
 
 /**
  * Plays audio from File/Blob instances
@@ -7403,7 +8015,6 @@ function FilePlayer(file, contentType) {
     audio.currentTime = 0;
   };
 }
-
 FilePlayer.ERROR_UNSUPPORTED_FORMAT = 'UNSUPPORTED_FORMAT';
 
 /**
@@ -7431,10 +8042,13 @@ function getContentTypeFromFile(file) {
 
 /**
  * Determines the file's content-type and then resolves to a FilePlayer instance
- * @param {File|Blob} file
+ * @param {File|Blob|String} file - binary data or URL of audio file (binary data playback may not work on mobile Safari)
  * @returns {Promise.<FilePlayer>}
  */
 function playFile(file) {
+  if (typeof file === 'string') {
+    return Promise.resolve(new UrlPlayer(file));
+  }
   return getContentTypeFromFile(file).then(function(contentType) {
     return new FilePlayer(file, contentType);
   });
@@ -7444,7 +8058,7 @@ module.exports = FilePlayer;
 module.exports.getContentType = getContentTypeFromFile;
 module.exports.playFile = playFile;
 
-},{"./content-type":50}],52:[function(require,module,exports){
+},{"./content-type":56}],58:[function(require,module,exports){
 'use strict';
 
 var Transform = require('stream').Transform;
@@ -7603,7 +8217,7 @@ FormatStream.prototype.promise = require('./to-promise');
 
 module.exports = FormatStream;
 
-},{"./to-promise":62,"clone":6,"defaults":8,"stream":41,"util":46}],53:[function(require,module,exports){
+},{"./to-promise":68,"clone":6,"defaults":8,"stream":46,"util":51}],59:[function(require,module,exports){
 /**
  * Copyright 2015 IBM Corp. All Rights Reserved.
  *
@@ -7664,7 +8278,7 @@ module.exports = function getModels(options) {
     });
 };
 
-},{}],54:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 
@@ -7759,7 +8373,7 @@ module.exports = {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"./file-player":51,"./format-stream":52,"./get-models":53,"./recognize-file":56,"./recognize-microphone":57,"./recognize-stream":58,"./result-stream":59,"./speaker-stream":60,"./timing-stream":61,"./webaudio-l16-stream":63,"./writable-element-stream":64,"buffer":5,"get-user-media-promise":13,"microphone-stream":20}],55:[function(require,module,exports){
+},{"./file-player":57,"./format-stream":58,"./get-models":59,"./recognize-file":62,"./recognize-microphone":63,"./recognize-stream":64,"./result-stream":65,"./speaker-stream":66,"./timing-stream":67,"./webaudio-l16-stream":69,"./writable-element-stream":70,"buffer":5,"get-user-media-promise":13,"microphone-stream":21}],61:[function(require,module,exports){
 'use strict';
 
 /**
@@ -7776,7 +8390,7 @@ module.exports = function noTimestamps(data) {
 
 module.exports.ERROR_NO_TIMESTAMPS = 'NO_TIMESTAMPS';
 
-},{}],56:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 /**
  * Copyright 2015 IBM Corp. All Rights Reserved.
  *
@@ -7803,6 +8417,7 @@ var assign = require('object.assign/polyfill')();
 var WritableElementStream = require('./writable-element-stream');
 var ResultStream = require('./result-stream');
 var SpeakerStream = require('./speaker-stream');
+var fetch = require('nodeify-fetch'); // like regular fetch, but with an extra method on the response to get a node-style ReadableStream
 
 /**
  * @module watson-speech/speech-to-text/recognize-file
@@ -7814,7 +8429,7 @@ var SpeakerStream = require('./speaker-stream');
  *
  * @param {Object} options - Also passed to {MediaElementAudioStream} and to {RecognizeStream}
  * @param {String} options.token - Auth Token - see https://github.com/watson-developer-cloud/node-sdk#authorization
- * @param {Blob|File} options.data - the raw audio data as a Blob or File instance
+ * @param {Blob|FileString} options.file - String url or the raw audio data as a Blob or File instance to be transcribed (and optionally played). Playback may not with with Blob or File on mobile Safari.
  * @param {Boolean} [options.play=false] - If a file is set, play it locally as it's being uploaded
  * @param {Boolena} [options.format=true] - pipe the text through a {FormatStream} which performs light formatting. Also controls smart_formatting option unless explicitly set.
  * @param {Boolena} [options.realtime=options.play] - pipe the text through a {TimingStream} which slows the output down to real-time to match the audio playback.
@@ -7827,6 +8442,15 @@ var SpeakerStream = require('./speaker-stream');
 module.exports = function recognizeFile(options) { // eslint-disable-line complexity
   if (!options || !options.token) {
     throw new Error('WatsonSpeechToText: missing required parameter: opts.token');
+  }
+
+  if (options.data && !options.file) {
+    options.file = options.data;
+    delete options.data;
+    if (!options.silent) {
+      // eslint-disable-next-line no-console
+      console.log(new Error('WatsonSpeechToText recognizeFile(): Warning data option was renamed to file. Set silent: true to hide this warning.'));
+    }
   }
 
   // the WritableElementStream works best in objectMode
@@ -7862,10 +8486,22 @@ module.exports = function recognizeFile(options) { // eslint-disable-line comple
     interim_results: true,
   }, options);
 
-  var stream = new BlobStream(options.data);
   var recognizeStream = new RecognizeStream(rsOpts);
-  var streams = [stream, recognizeStream]; // collect all of the streams so that we can bundle up errors and send them to the last one
-  stream = stream.pipe(recognizeStream);
+  var streams = [recognizeStream]; // collect all of the streams so that we can bundle up errors and send them to the last one
+  var stream = recognizeStream;
+  if (typeof options.file === 'string') {
+    fetch(options.file).then(function(response) {
+      var source = response.body.getReadable();
+      source.pipe(recognizeStream);
+      streams.unshift(source);
+    }).catch(function(er) {
+      recognizeStream.emit('error', er);
+    });
+  } else {
+    var source = new BlobStream(options.file);
+    source.pipe(recognizeStream);
+    streams.unshift(source);
+  }
 
   // note: the TimingStream cannot currently handle results as regrouped by the SpeakerStream
   // so it must come first
@@ -7891,11 +8527,43 @@ module.exports = function recognizeFile(options) { // eslint-disable-line comple
   }
 
   if (options.play) {
-    FilePlayer.playFile(options.data).then(function(player) {
+    // when file playback actually begins
+    // (mostly important for downloaded files)
+    FilePlayer.playFile(options.file).then(function(player) {
       recognizeStream.on('stop', player.stop.bind(player));
       recognizeStream.on('error', player.stop.bind(player));
+
+      // for files loaded via URL, restet the start time of the timing stream to when it begins playing
+      if (timingStream && typeof options.file === 'string') {
+        // eslint-disable-next-line func-style
+        var fn = function() {
+          timingStream.setStartTime(); // defaults to Date.now()
+          player.audio.removeEventListener('playing', fn);
+        };
+        player.audio.addEventListener('playing', fn);
+      }
     }).catch(function(err) {
+
+      // Node.js automatically unpipes any source stream(s) when an error is emitted (on the assumption that the previous stream's output caused the error.)
+      // In this case, we don't want that behavior - a playback error should not stop the transcription
+      // So, we have to:
+      //   1. find the source streams
+      //   2. emit the error (causing the automatic unpipe)
+      //   3. re-pipe the source streams
+
+      var sources = streams.filter(function(s) {
+        return s._readableState &&
+          s._readableState.pipes &&
+          (s._readableState.pipes === stream ||
+            (Array.isArray(s._readableState.pipes) && s._readableState.pipes.indexOf(stream) !== -1)
+          );
+      });
+
       stream.emit('error', err);
+
+      sources.forEach(function(s) {
+        s.pipe(stream);
+      });
     });
   }
 
@@ -7934,7 +8602,7 @@ module.exports = function recognizeFile(options) { // eslint-disable-line comple
 
 
 
-},{"./file-player.js":51,"./format-stream.js":52,"./recognize-stream.js":58,"./result-stream":59,"./speaker-stream":60,"./timing-stream.js":61,"./writable-element-stream":64,"object.assign/polyfill":25,"readable-blob-stream":29}],57:[function(require,module,exports){
+},{"./file-player.js":57,"./format-stream.js":58,"./recognize-stream.js":64,"./result-stream":65,"./speaker-stream":66,"./timing-stream.js":67,"./writable-element-stream":70,"nodeify-fetch":22,"object.assign/polyfill":30,"readable-blob-stream":34}],63:[function(require,module,exports){
 /**
  * Copyright 2015 IBM Corp. All Rights Reserved.
  *
@@ -8069,6 +8737,9 @@ module.exports = function recognizeMicrophone(options) {
 
   getMicStream.catch(function(err) {
     stream.emit('error', err);
+    if (err.name === 'NotSupportedError') {
+      stream.end(); // end the stream
+    }
   });
 
   getMicStream.then(function(micStream) {
@@ -8126,9 +8797,9 @@ module.exports = function recognizeMicrophone(options) {
   return stream;
 };
 
+module.exports.isSupported = getUserMedia.isSupported;
 
-
-},{"./format-stream.js":52,"./recognize-stream.js":58,"./result-stream":59,"./speaker-stream":60,"./webaudio-l16-stream.js":63,"./writable-element-stream":64,"get-user-media-promise":13,"microphone-stream":20,"object.assign/polyfill":25,"stream":41}],58:[function(require,module,exports){
+},{"./format-stream.js":58,"./recognize-stream.js":64,"./result-stream":65,"./speaker-stream":66,"./webaudio-l16-stream.js":69,"./writable-element-stream":70,"get-user-media-promise":13,"microphone-stream":21,"object.assign/polyfill":30,"stream":46}],64:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014 IBM Corp. All Rights Reserved.
@@ -8256,7 +8927,6 @@ RecognizeStream.WEBSOCKET_CONNECTION_ERROR = 'WebSocket connection error';
 RecognizeStream.prototype.initialize = function() {
   var options = this.options;
 
-  // todo: apply these corrections to other methods (?)
   if (options.token && !options['watson-token']) {
     options['watson-token'] = options.token;
   }
@@ -8267,7 +8937,10 @@ RecognizeStream.prototype.initialize = function() {
     options['X-Watson-Learning-Opt-Out'] = options['X-WDC-PL-OPT-OUT'];
   }
 
-  var queryParams = util._extend('customization_id' in options ? pick(options, QUERY_PARAMS_ALLOWED) : {model: 'en-US_BroadbandModel'}, pick(options, QUERY_PARAMS_ALLOWED));
+  var queryParams = util._extend(
+    'customization_id' in options ? pick(options, QUERY_PARAMS_ALLOWED) : {model: 'en-US_BroadbandModel'},
+    pick(options, QUERY_PARAMS_ALLOWED)
+  );
 
   var queryString = qs.stringify(queryParams);
   var url = (options.url || 'wss://stream.watsonplatform.net/speech-to-text/api').replace(/^http/, 'ws') + '/v1/recognize?' + queryString;
@@ -8427,6 +9100,8 @@ RecognizeStream.prototype._read = function(/* size*/) {
   // so, the best we can do here is a no-op
 };
 
+RecognizeStream.ERROR_UNRECOGNIZED_FORMAT = 'UNRECOGNIZED_FORMAT';
+
 RecognizeStream.prototype._write = function(chunk, encoding, callback) {
   var self = this;
   if (self.finished) {
@@ -8439,7 +9114,16 @@ RecognizeStream.prototype._write = function(chunk, encoding, callback) {
   } else {
     if (!this.initialized) {
       if (!this.options['content-type']) {
-        this.options['content-type'] = RecognizeStream.getContentType(chunk);
+        var ct = RecognizeStream.getContentType(chunk);
+        if (ct) {
+          this.options['content-type'] = ct;
+        } else {
+          var err = new Error('Unable to determine content-type from file header, please specify manually.');
+          err.name = RecognizeStream.ERROR_UNRECOGNIZED_FORMAT;
+          this.emit('error', err);
+          this.push(null);
+          return;
+        }
       }
       this.initialize();
     }
@@ -8450,8 +9134,22 @@ RecognizeStream.prototype._write = function(chunk, encoding, callback) {
   }
 };
 
-// flow control - don't ask for more data until we've finished what we have
-// todo: see if this can be improved
+/**
+ * Flow control - don't ask for more data until we've finished what we have
+ *
+ * Notes:
+ *
+ * This limits upload speed to 100 * options.highWaterMark / second.
+ *
+ * The default highWaterMark is 16kB, so the default max upload speed is ~1.6MB/s.
+ *
+ * Microphone input provides audio at a (downsampled) rate of:
+ *   16000 samples/s * 16-bits * 1 channel = 32kB/s
+ * (note the bits to Bytes conversion there)
+ *
+ * @private
+ * @param {Function} next
+ */
 RecognizeStream.prototype.afterSend = function afterSend(next) {
   if (this.socket.bufferedAmount <= (this._writableState.highWaterMark || 0)) {
     process.nextTick(next);
@@ -8503,7 +9201,7 @@ RecognizeStream.getContentType = function(buffer) {
 module.exports = RecognizeStream;
 
 }).call(this,require('_process'))
-},{"../util/querystring.js":68,"./content-type":50,"./to-promise":62,"_process":28,"object.pick":26,"stream":41,"util":46,"websocket":47}],59:[function(require,module,exports){
+},{"../util/querystring.js":74,"./content-type":56,"./to-promise":68,"_process":33,"object.pick":31,"stream":46,"util":51,"websocket":52}],65:[function(require,module,exports){
 /**
  * Copyright 2014 IBM Corp. All Rights Reserved.
  *
@@ -8561,7 +9259,7 @@ ResultStream.prototype.promise = require('./to-promise');
 
 module.exports = ResultStream;
 
-},{"./to-promise":62,"clone":6,"stream":41,"util":46}],60:[function(require,module,exports){
+},{"./to-promise":68,"clone":6,"stream":46,"util":51}],66:[function(require,module,exports){
 /**
  * Copyright 2014 IBM Corp. All Rights Reserved.
  *
@@ -8774,7 +9472,34 @@ SpeakerStream.prototype.buildMessage = function() {
     alt.timestamps = utterance.timestamps;
     // overwrite the final value
     result.final = final;
-    // todo: split up words_alternatives, keywords, etc and copy to appropriate result for time
+
+    var start = utterance.timestamps[0][1];
+    var end = utterance.timestamps[utterance.timestamps.length - 1][2];
+
+    // overwrite the word_alternatives
+    if (utterance.result.word_alternatives) {
+      var alts = utterance.result.word_alternatives.filter(function(walt) {
+        return walt.start_time >= start && walt.end_time <= end;
+      });
+      result.word_alternatives = alts;
+    }
+
+    // overwrite the keywords spotted
+    /* eslint-disable camelcase */
+    var original_keywords_result = utterance.result.keywords_result;
+    if (original_keywords_result) {
+      var keywords_result = {};
+      Object.keys(original_keywords_result).forEach(function(keyword) {
+        var spottings = original_keywords_result[keyword].filter(function(spotting) {
+          return spotting.start_time >= start && spotting.end_time <= end;
+        });
+        if (spottings.length) {
+          keywords_result[keyword] = spottings;
+        }
+      });
+      result.keywords_result = keywords_result;
+    }
+    /* eslint-enable camelcase */
 
     return result;
   });
@@ -8801,7 +9526,7 @@ SpeakerStream.prototype.handleResults = function(data) {
   }, this);
 };
 
-// sorts by start time and then end time and then finality
+// sorts by start time and then end time
 SpeakerStream.speakerLabelsSorter = function(a, b) {
   if (a.from === b.from) {
     if (a.to === b.to) {
@@ -8889,7 +9614,7 @@ SpeakerStream.prototype._flush = function(done) {
     var err = new Error(msg);
     err.name = SpeakerStream.ERROR_MISMATCH;
     err.speaker_labels = this.speaker_labels;
-    err.timestamps = this.results;
+    err.results = this.results;
     this.emit('error', err);
   }
   done();
@@ -8899,11 +9624,11 @@ SpeakerStream.prototype.promise = require('./to-promise');
 
 module.exports = SpeakerStream;
 
-},{"./no-timestamps":55,"./to-promise":62,"clone":6,"lodash.pullallwith":19,"stream":41,"util":46}],61:[function(require,module,exports){
+},{"./no-timestamps":61,"./to-promise":68,"clone":6,"lodash.pullallwith":20,"stream":46,"util":51}],67:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 
-var Duplex = require('stream').Duplex;
+var Transform = require('stream').Transform;
 var util = require('util');
 var defaults = require('defaults');
 var noTimestamps = require('./no-timestamps');
@@ -8912,9 +9637,6 @@ var noTimestamps = require('./no-timestamps');
  * Slows results down to no faster than real time.
  *
  * Useful when running recognizeFile because the text can otherwise appear before the words are spoken
- *
- * Note: when combined with a SpeakerStream, the TimingStream must come first
- * @todo: fix TimingStream to work with the output of the SpeakerStream
  *
  * @param {Object} [opts]
  * @param {*} [opts.emitAt=TimingStream.END] - set to TimingStream.START for a more subtitles-like output where results are returned as soon as the utterance begins
@@ -8928,56 +9650,53 @@ function TimingStream(opts) {
     allowHalfOpen: true, // keep the readable side open after the source closes
     writableObjectMode: true
   });
-  Duplex.call(this, opts);
+  Transform.call(this, opts);
 
   this.startTime = Date.now();
 
-  // queue to store future messages
-  this.messages = [];
-
-  // setTimeout handle. if null, next tick will occur whenever new data arrives
-  this.nextTick = null;
-
-  // this stream cannot end until both the messages queue is empty and the source stream has ended
-  this.sourceEnded = false;
-
-  var self = this;
-  this.on('finish', function() {
-    self.sourceEnded = true; // todo: see if there's anything built-in that does this for us
-    self.checkForEnd();
-  });
+  // to support stopping mid-stream
+  this.stopped = false;
+  this.timeout = null;
 }
-util.inherits(TimingStream, Duplex);
+util.inherits(TimingStream, Transform);
 
 TimingStream.START = 1;
 TimingStream.END = 2;
 
-TimingStream.prototype._write = function(msg, encoding, next) {
+TimingStream.prototype._transform = function(msg, encoding, next) {
   if (msg instanceof Buffer) {
-    return this.emit('error', new Error('TimingStream requires the source to be in objectMode'));
+    return next(new Error('TimingStream requires the source to be in objectMode'));
   }
   if (Array.isArray(msg.results) && msg.results.length && noTimestamps(msg)) {
     var err = new Error('TimingStream requires timestamps');
     err.name = noTimestamps.ERROR_NO_TIMESTAMPS;
-    this.emit('error', err);
+    return next(err);
+  }
+
+  if (this.stopped) {
     return;
   }
 
-  this.messages.push(msg);
+  var delayMs = this.getDelayMs(msg);
 
-  if (!this.nextTick) {
-    this.scheduleNextTick();
+  var objectMode = this.options.objectMode || this.options.readableObjectMode;
+  var hasTranscript = Array.isArray(msg.results && msg.results.length);
+
+  // to support text mode
+  if (!objectMode && hasTranscript) {
+    msg = msg.results[0].alternatives[0].transcript;
   }
-  next();
+
+  if (objectMode || hasTranscript) {
+    this.timeout = setTimeout(function() {
+      next(null, msg);
+    }, delayMs);
+  } else {
+    return next();
+  }
 };
 
-TimingStream.prototype._read = function(/* size*/) {
-  // ignore - we'll emit results once the time has come
-};
 
-TimingStream.prototype.cutoff = function cutoff() {
-  return (Date.now() - this.startTime) / 1000 - this.options.delay;
-};
 
 /**
  * Grabs the appropriate timestamp from the given message, depending on options.emitAt and the type of message
@@ -8989,7 +9708,7 @@ TimingStream.prototype.cutoff = function cutoff() {
 TimingStream.prototype.getMessageTime = function(msg) {
   if (this.options.emitAt === TimingStream.START) {
     if (Array.isArray(msg.results) && msg.results.length) {
-      return msg.results[0].alternatives[0].timestamps[0][TimingStream.START];
+      return msg.results[msg.results.length - 1].alternatives[0].timestamps[0][TimingStream.START];
     } else if (Array.isArray(msg.speaker_labels) && msg.speaker_labels.length) {
       return msg.speaker_labels[0].from;
     }
@@ -9005,116 +9724,43 @@ TimingStream.prototype.getMessageTime = function(msg) {
 };
 
 /**
- * Returns one of:
- *  - null if the next result is completely later than the current cutoff
- *  - the original next result object (removing it from the array) if it's completely earlier than the current cutoff
- *  (or it's partially within range and emitAt is set to start)
- *
- * @private
- * @returns {Object|null}
- */
-TimingStream.prototype.getCurrentResult = function getCurrentResult() {
-  if (!this.messages.length) {
-    return null;
-  }
-  if (this.getMessageTime(this.messages[0]) <= this.cutoff()) {
-    return this.messages.shift();
-  }
-};
-
-
-/**
- * Tick emits any buffered words that have a timestamp before the current time, then calls scheduleNextTick()
- *
- * @private
- */
-TimingStream.prototype.tick = function tick() {
-  var msg;
-  // eslint-disable-next-line no-cond-assign
-  while (msg = this.getCurrentResult()) {
-    if (this.options.objectMode || this.options.readableObjectMode) {
-      this.push(msg);
-    } else if (Array.isArray(msg.results && msg.results.length)) {
-      this.push(msg.results[0].alternatives[0].transcript);
-    }
-  }
-
-  this.scheduleNextTick();
-};
-
-/**
- * Given a speaker labels message, returns the final to time
+ * Gets the length of time to delay (in ms) before emitting the given message
  *
  * @private
  * @param {Object} msg
- * @returns {Number}
+ * @returns {Number} ms to delay
  */
-function getEnd(msg) {
-  return msg.speaker_labels[msg.speaker_labels.length - 1].to;
-}
-
-TimingStream.prototype.tickSpeakerLables = function tickSpeakerLabels() {
-  clearTimeout(this.nextSpeakerLabelsTick);
-  if (this.speakerLabels.length && getEnd(this.speakerLabels[0]) <= this.cutoff()) {
-    this.push(this.speakerLabels.shift());
-  }
-  if (this.speakerLabels.length) {
-    var nextMsg = this.speakerLabels[0];
-    var nextTime = this.startTime + (getEnd(nextMsg) * 1000);
-    this.nextSpeakerLabelsTick = setTimeout(this.tickSpeakerLables.bind(this, nextTime - Date.now()));
-  } else {
-    this.nextSpeakerLabelsTick = null;
-    this.checkForEnd();
-  }
+TimingStream.prototype.getDelayMs = function(msg) {
+  var messageTime = this.getMessageTime(msg);
+  var nextTickTime = this.startTime + (messageTime * 1000); // ms since epoch
+  var delayMs = nextTickTime - Date.now(); // ms from right now
+  return Math.max(0, delayMs); // never return a negative number
 };
 
 /**
- * Schedules next tick or checks for the end of the results
+ * Overrides the start time, adjusting the delay applied to all pending results.
  *
- * @private
- */
-TimingStream.prototype.scheduleNextTick = function scheduleNextTick() {
-  clearTimeout(this.nextTick); // just in case
-  if (this.messages.length) {
-    var messageTime = this.getMessageTime(this.messages[0]);
-    var nextTickTime = this.startTime + (messageTime * 1000); // ms since epoch
-    var nextTickOffset = Math.min(0, nextTickTime - Date.now()); // ms from right now
-    this.nextTick = setTimeout(this.tick.bind(this), nextTickOffset);
-  } else {
-    this.nextTick = null;
-    this.checkForEnd();
-  }
-};
-
-/**
- * Triggers the 'close' and 'end' events if both pre-conditions are true:
- *  - the previous stream must have already emitted it's 'end' event
- *  - there must be no next tick scheduled, indicating that there are no results buffered for later delivery
+ * Stream may emit up to 1 more result based on the older time after this is called.
  *
- * @private
+ * @param {Number} [time=Date.now()] Start time in Miliseconds since epoch
  */
-TimingStream.prototype.checkForEnd = function() {
-  if (this.sourceEnded && !this.nextTick) {
-    this.emit('close');
-    this.push(null);
-  }
+TimingStream.prototype.setStartTime = function(time) {
+  this.startTime = time || Date.now();
 };
-
 
 TimingStream.prototype.promise = require('./to-promise');
 
 // when stop is called, immediately stop emitting results
 TimingStream.prototype.stop = function stop() {
+  this.stopped = true;
+  clearTimeout(this.timeout);
   this.emit('stop');
-  this.checkForEnd(); // in case the RecognizeStream already ended
-  clearTimeout(this.nextTick);
-  this.nextTick = -1; // fake timer to prevent _write from scheduling new ticks
 };
 
 module.exports = TimingStream;
 
 }).call(this,require("buffer").Buffer)
-},{"./no-timestamps":55,"./to-promise":62,"buffer":5,"defaults":8,"stream":41,"util":46}],62:[function(require,module,exports){
+},{"./no-timestamps":61,"./to-promise":68,"buffer":5,"defaults":8,"stream":46,"util":51}],68:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 
@@ -9138,7 +9784,7 @@ module.exports = function promise(stream) {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":5}],63:[function(require,module,exports){
+},{"buffer":5}],69:[function(require,module,exports){
 (function (process,Buffer){
 'use strict';
 var Transform = require('stream').Transform;
@@ -9328,7 +9974,7 @@ module.exports = WebAudioL16Stream;
 
 
 }).call(this,require('_process'),require("buffer").Buffer)
-},{"_process":28,"buffer":5,"defaults":8,"stream":41,"util":46}],64:[function(require,module,exports){
+},{"_process":33,"buffer":5,"defaults":8,"stream":46,"util":51}],70:[function(require,module,exports){
 'use strict';
 
 var Writable = require('stream').Writable;
@@ -9403,7 +10049,7 @@ WritableElementStream.prototype.writeObject = function writeObject(data, encodin
 
 module.exports = WritableElementStream;
 
-},{"defaults":8,"stream":41,"util":46}],65:[function(require,module,exports){
+},{"defaults":8,"stream":46,"util":51}],71:[function(require,module,exports){
 /**
  * Copyright 2015 IBM Corp. All Rights Reserved.
  *
@@ -9465,7 +10111,7 @@ module.exports = function getVoices(options) {
     });
 };
 
-},{}],66:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 /**
  * Copyright 2015 IBM Corp. All Rights Reserved.
  *
@@ -9498,7 +10144,7 @@ exports.synthesize = require('./synthesize');
  */
 exports.getVoices = require('./get-voices');
 
-},{"./get-voices":65,"./synthesize":67}],67:[function(require,module,exports){
+},{"./get-voices":71,"./synthesize":73}],73:[function(require,module,exports){
 /**
  * Copyright 2015 IBM Corp. All Rights Reserved.
  *
@@ -9518,7 +10164,7 @@ exports.getVoices = require('./get-voices');
 var pick = require('object.pick');
 var qs = require('../util/querystring.js');
 
-var QUERY_PARAMS_ALLOWED = ['voice', 'X-WDC-PL-OPT-OUT', 'text', 'watson-token'];
+var QUERY_PARAMS_ALLOWED = ['voice', 'X-WDC-PL-OPT-OUT', 'X-Watson-Learning-Opt-Out', 'text', 'watson-token', 'accept'];
 
 /**
  * @module watson-speech/text-to-speech/synthesize
@@ -9533,7 +10179,8 @@ var QUERY_PARAMS_ALLOWED = ['voice', 'X-WDC-PL-OPT-OUT', 'text', 'watson-token']
  * @param {String} options.token auth token
  * @param {String} options.text text to speak
  * @param {String} [options.voice=en-US_MichaelVoice] what voice to use - call getVoices() for a complete list.
- * @param {Number} [options.X-WDC-PL-OPT-OUT=0] set to 1 to opt-out of allowing Watson to use this request to improve it's services
+ * @param {String} [options.accept] - specify desired audio format. Leave unset to allow (most) browsers to automatically negotiate an ideal format.
+ * @param {Number} [options.X-Watson-Learning-Opt-Out=0] set to 1 to opt-out of allowing Watson to use this request to improve it's services
  * @param {Boolean} [options.autoPlay=true] automatically play the audio
  * @param {DOMAudioElement} [options.element] <audio> element - will be used instead of creating a new one if provided
  * @returns {Audio}
@@ -9546,7 +10193,7 @@ module.exports = function synthesize(options) {
   options['watson-token'] = options.token;
   delete options.token;
   var audio = options.element || new Audio();
-  audio.crossOrigin = true;
+  audio.crossOrigin = 'anonymous';
   audio.src = 'https://stream.watsonplatform.net/text-to-speech/api/v1/synthesize?' + qs.stringify(pick(options, QUERY_PARAMS_ALLOWED));
   if (options.autoPlay !== false) {
     audio.play();
@@ -9555,7 +10202,7 @@ module.exports = function synthesize(options) {
 };
 
 
-},{"../util/querystring.js":68,"object.pick":26}],68:[function(require,module,exports){
+},{"../util/querystring.js":74,"object.pick":31}],74:[function(require,module,exports){
 'use strict';
 
 /**
