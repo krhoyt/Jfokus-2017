@@ -1,0 +1,122 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="iot-gauge">
+
+  <template>
+    <style>
+      :host {
+        height: 76px;
+        position: relative;  
+        width: 76px;
+      }
+
+      svg {
+        height: 56px;
+        left: 10px;
+        position: absolute;
+        top: 10px;
+        width: 56px;
+      }
+
+      .indicator {
+        background-position: center 6px;
+        background-repeat: no-repeat;
+        background-size: auto 13px;
+        border-radius: 53px;
+        display: flex;
+        flex-direction: row;
+        height: 50px;
+        justify-content: center;
+        left: 13px;
+        position: absolute;
+        top: 13px;
+        width: 50px;  
+      }
+
+      .indicator > p {
+        color: white;
+        font-size: 18px;
+        font-weight: 300;
+        line-height: 66px;  
+        margin: 0;
+        padding: 0;
+      }      
+    </style>
+
+    <svg>
+      <circle cx="28" cy="28" r="28" fill="rgba( 255, 255, 255, 0.45 )" stroke="none"></circle>
+      <path fill="white" stroke="none" d$="[[path]]"></path>
+    </svg>
+    <div class="indicator" style$="background-color: [[color]]; background-image: url( [[icon]] );">
+      <p id="content">[[value]]</p>
+      <p>[[units]]</p>
+    </div>    
+  </template>
+
+  <script>
+    class Gauge extends Polymer.Element {
+      static get is() { return 'iot-gauge'; }
+
+      static get config() {
+        return {
+        	properties: {
+            animation: Object,
+            color: String,
+            icon: String,
+            path: String,
+            rate: Number,
+            units: String,
+            value: {
+              type: Number,
+              computed: 'getValue( value )'
+            }
+        	}
+        };
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+
+        this.style.backgroundColor = this.color;
+        this.value = Math.random() * 100;
+        this.start();
+      }
+
+      start() {
+        this.animation = TweenMax.to( this, this.rate, {
+          value: Math.random() * 100,
+          ease: Power2.easeInOut,
+          onComplete: this.doComplete,
+          onCompleteParams: [this],
+          onUpdate: this.doUpdate,
+          onUpdateParams: [this]
+        } );
+      }
+
+      getValue( value ) {
+        return Math.round( value );
+      }
+
+      doComplete( component ) {
+        component.start();
+      }
+
+      doUpdate( component ) {
+        var arc = ( component.value <= 50 ) ? 0 : 1;
+        var x = Math.cos( ( 2 * Math.PI ) / ( 100 / component.value ) );
+        var y = Math.sin( ( 2 * Math.PI ) / ( 100 / component.value ) );
+        var d = 
+          "M" + Gauge.RADIUS + ", " + Gauge.RADIUS + " " +
+          "L" + Gauge.RADIUS + ", " + 0 + ", " +
+          "A" + Gauge.RADIUS + ", " + Gauge.RADIUS + " 0 " + arc + ", 1" + ( Gauge.RADIUS + y * Gauge.RADIUS ) + ", " + ( Gauge.RADIUS - x * Gauge.RADIUS ) + " z"; 
+
+        component.path = d;
+      }
+    }
+
+    Gauge.RADIUS = 28;
+
+    customElements.define( Gauge.is, Gauge );
+  </script>
+		
+</dom-module>

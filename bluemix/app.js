@@ -94,6 +94,8 @@ client.on( 'message', function( topic, message ) {
   // Parse JSON
   data = JSON.parse( message.toString() );
 
+  console.log( data );
+
   if( topic == config.topic_stream ) {
     destination = 'stream';
   } else {

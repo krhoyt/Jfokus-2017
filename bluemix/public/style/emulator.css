@@ -1,0 +1,33 @@
+body {
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Roboto', sans-serif;  
+  margin: 0;
+  padding: 0; 
+}
+
+.action {
+  background-color: #2196F3;
+  background-image: url( ../img/add.svg );
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 24px;
+  border: none;
+  border-radius: 56px;
+  bottom: 16px;
+  box-shadow: 0 4px 4px rgba( 0, 0, 0, 0.20 );
+  height: 56px;
+  outline: none;
+  position: absolute;
+  right: 16px;
+  width: 56px;
+}
+
+iot-instance {
+  border-top: dashed 1px rgba( 255, 255, 255, 0.45 );
+}
+
+iot-instance:first-of-type {
+  border: none;
+}
