@@ -56,8 +56,8 @@ var io = require( 'socket.io' )( server );
 io.on( 'connection', function( socket ) {
   // Listen for sensor event
   // Broadcast when encountered
-  socket.on( 'stacks', function( data ) {
-    io.emit( 'stacks', data );
+  socket.on( 'emulator', function( data ) {
+    io.emit( 'sensor', data );
   } );
 } );
 
@@ -93,8 +93,6 @@ client.on( 'message', function( topic, message ) {
 
   // Parse JSON
   data = JSON.parse( message.toString() );
-
-  console.log( data );
 
   if( topic == config.topic_stream ) {
     destination = 'stream';

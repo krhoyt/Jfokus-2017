@@ -28,7 +28,7 @@ router.post( '/sensor', function( req, res ) {
 			client: data[2],
 			temperature: parseFloat( data[3] ),
 			humidity: parseFloat( data[4] ),
-			light: parseInt( data[5] ) / 100,
+			light: parseInt( data[5] ),
 			timestamp: parseInt( data[6] ),
 			color: {
 				red: parseInt( data[7] ),

@@ -17,9 +17,11 @@ class Emulator {
 
   doInstanceReport( evt ) {
     console.log( evt.detail );
-    this._socket.emit( evt.detail );
+    this._socket.emit( Emulator.SENSOR_TYPE, evt.detail );
   }
 
 }
+
+Emulator.SENSOR_TYPE = 'emulator';
 
 let emulator = new Emulator();

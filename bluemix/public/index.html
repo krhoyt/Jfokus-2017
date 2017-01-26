@@ -29,9 +29,28 @@
 <body>
 
 <!-- Sensor values -->
-<iot-panel title="Temperature" icon="thermometer.svg" field="temperature" units="&deg;"></iot-panel>
-<iot-panel title="Humidity" icon="weather.svg" field="humidity" units="%"></iot-panel>
-<iot-panel title="Light" icon="summer.svg" field="light" units="%"></iot-panel>
+<iot-panel 
+  id="temperature"
+  title="Temperature" 
+  icon="thermometer.svg" 
+  field="temperature" 
+  units="&deg;" 
+  points="30">		
+</iot-panel>
+<iot-panel 
+  title="Humidity" 
+  icon="weather.svg" 
+  field="humidity" 
+  units="%" 
+  points="30">
+</iot-panel>
+<iot-panel 
+  title="Light" 
+  icon="summer.svg" 
+  field="light" 
+  units="%" 
+  points="30">
+</iot-panel>
 
 <!-- Status bar -->
 <twitter-field placeholder="@"></twitter-field>

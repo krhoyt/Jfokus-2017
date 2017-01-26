@@ -30,7 +30,7 @@
       static get config() {
         return {
         	properties: {
-            lines: Array
+            points: Number
         	}
         };
       }
@@ -45,6 +45,57 @@
         setTimeout( function() {
           this.layout();
         }.bind( this ), 200 );
+      }
+
+      calculate( values ) {
+        var path = null;
+        var step = null;
+        var vertical = null;
+
+        step = this.$.plot.parentNode.clientWidth / ( this.points - 1 );
+
+        for( var v = 0; v < values.length; v++ ) {
+          vertical = 
+            this.$.plot.parentNode.clientHeight - 
+            ( ( this.$.plot.parentNode.clientHeight / 100 ) * values[v] );
+
+          if( path == null ) {
+            path = 'M0,' + vertical;
+          } else {
+            path = path + 'L' + ( v * step ) + ',' + vertical;
+          }
+        }
+
+        return path;
+      }
+
+      draw( history ) {
+        var color = null;
+        var element = null;
+        var path = null;
+
+        for( const client of Object.keys( history ) ) {
+          element = this.$.plot.querySelector( 'path[data-client="' + client + '"]' );
+
+          if( element == null ) {
+            console.log( 'Path not found.' );
+
+            color = 'rgb( ' +
+              history[client].color.red + ', ' +
+              history[client].color.green + ', ' + 
+              history[client].color.blue + ' )';
+
+            element = document.createElementNS( Chart.SVG_NAMESPACE, 'path' );
+            element.setAttributeNS( null, 'data-client', client );
+            element.setAttributeNS( null, 'fill', 'none' );
+            element.setAttributeNS( null, 'stroke', color );
+            element.setAttributeNS( null, 'stroke-width', 3 );
+            this.$.plot.appendChild( element );
+          }          
+
+          path = this.calculate( history[client].values );
+          element.setAttributeNS( null, 'd', path );
+        }
       }
 
       layout() {

@@ -1,6 +1,6 @@
 <link rel="import" href="../../bower_components/polymer/polymer-element.html">
-<link rel="import" href="../../components/dashboard/iot-history.html">
 <link rel="import" href="../../components/dashboard/iot-chart.html">
+<link rel="import" href="../../components/dashboard/iot-range.html">
 
 <dom-module id="iot-panel">
 
@@ -34,8 +34,8 @@
 
     <h1>[[title]]</h1>
     <div class="icon" style$="background-image: url( /img/[[icon]] );"></div>
-    <iot-history id="history" current="0" maximum="0" minimum="0" units="[[units]]"></iot-history>
-    <iot-chart id="chart"></iot-chart>
+    <iot-range id="range" current="0" maximum="0" minimum="0" units="[[units]]"></iot-range>
+    <iot-chart id="chart" points="[[points]]"></iot-chart>
   </template>
 
   <script>
@@ -47,6 +47,7 @@
         	properties: {
             field: String,
             icon: String,
+            points: Number,
             title: String,
             units: String
         	}
@@ -55,12 +56,66 @@
 
       connectedCallback() {
         super.connectedCallback();
+        this._count = 0;
+        this._history = new Object();
       }
 
       push( reading ) {
-        this.$.history.push( reading[this.field] );
+        var found = false;
+        var maximum = -999;
+        var minimum = 999;
+
+        for( const client of Object.keys( this._history ) ) {
+          if( client == reading.client ) {
+            this._history[client].values.push( reading[this.field] );
+
+            if( this._history[client].values.length > this.points ) {
+              this._history[client].values.splice( 
+                0, 
+                this._history[client].values.length - this.points 
+              );
+            }
+
+            for( var v = 0; v < this._history[client].values.length; v++ ) {
+              if( this._history[client].values[v] < minimum ) {
+                minimum = this._history[client].values[v];
+              }
+
+              if( this._history[client].values[v] > maximum ) {
+                maximum = this._history[client].values[v];
+              }
+            }
+
+            found = true;
+            break;
+          }
+        }
+
+        if( !found ) {
+          this._history[reading.client] = {
+            color: reading.color,
+            values: [reading[this.field]]
+          }
+          minimum = reading[this.field];
+          maximum = reading[this.field];
+
+          this._count = this._count + 1;
+
+          this.dispatchEvent( new CustomEvent( Panel.SENSOR_COUNT, {
+            detail: {
+              count: this._count
+            }
+          } ) );          
+        }
+
+        this.$.range.minimum = Math.round( minimum );
+        this.$.range.maximum = Math.round( maximum );
+        this.$.range.current = Math.round( reading[this.field] );
+        this.$.chart.draw( this._history );
       }
     }
+
+    Panel.SENSOR_COUNT = 'panel-sensor-count';
 
     customElements.define( Panel.is, Panel );
   </script>

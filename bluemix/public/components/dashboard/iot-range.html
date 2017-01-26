@@ -1,6 +1,6 @@
 <link rel="import" href="../../bower_components/polymer/polymer-element.html">
 
-<dom-module id="iot-history">
+<dom-module id="iot-range">
 
   <template>
     <style>
@@ -66,13 +66,12 @@
   </template>
 
   <script>
-    class History extends Polymer.Element {
-      static get is() { return 'iot-history'; }
+    class Range extends Polymer.Element {
+      static get is() { return 'iot-range'; }
 
       static get config() {
         return {
         	properties: {
-            count: Number,
             current: Number,
             maximum: Number,
             minimum: Number,
@@ -84,27 +83,9 @@
       connectedCallback() {
         super.connectedCallback();
       }
-
-      push( value ) {
-        this.current = Math.round( value );
-
-        if( this.count == undefined ) {
-          this.minimum = Math.round( value );
-          this.maximum = Math.round( value );
-          this.count = 1;
-        } else {
-          if( value < this.minimum ) {
-            this.minimum = Math.round( value );
-          }
-
-          if( value > this.maximum ) {
-            this.maximum = Math.round( value );
-          }
-        }
-      }
     }
 
-    customElements.define( History.is, History );
+    customElements.define( Range.is, Range );
   </script>
 		
 </dom-module>

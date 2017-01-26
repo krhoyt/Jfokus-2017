@@ -2,6 +2,8 @@ class Dashboard {
 
   constructor() {
     this._temperature = document.querySelector( 'iot-panel:nth-of-type( 1 )' );
+    this._temperature.addEventListener( Panel.SENSOR_COUNT, evt => this.doSensorCount( evt ) );
+
     this._humidity = document.querySelector( 'iot-panel:nth-of-type( 2 )' );    
     this._light = document.querySelector( 'iot-panel:nth-of-type( 3 )' );    
 
@@ -34,11 +36,12 @@ class Dashboard {
     this._socket.on( 'sensor', evt => this.doSensorMessage( evt ) );
   }
 
+  doSensorCount( evt ) {
+    this._status.count = evt.detail.count;
+  }
+
   doSensorMessage( data ) {
     console.log( data );    
-
-    data.humidity = data.humidity * 100;
-    data.light = data.light * 100;
 
     this._temperature.push( data );
     this._humidity.push( data );
@@ -50,8 +53,9 @@ class Dashboard {
     this._orientation.toggle();
   }
 
+  // Get some help
   doStatusHelp( evt ) {
-    console.log( 'help-click' );
+    window.open( 'http://twitter.com/krhoyt' );
   }
 
   // Invoke speech-to-text
