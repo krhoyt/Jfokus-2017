@@ -49,18 +49,6 @@ var server = app.listen( env.port, env.bind, function() {
 	console.log( 'Started on: ' + env.port );
 } );
 
-// Socket
-var io = require( 'socket.io' )( server );
-
-// New socket connection
-io.on( 'connection', function( socket ) {
-  // Listen for sensor event
-  // Broadcast when encountered
-  socket.on( 'emulator', function( data ) {
-    io.emit( 'sensor', data );
-  } );
-} );
-
 // Connect to Watson IoT
 var client  = mqtt.connect( 
   config.iot_host, 
@@ -71,6 +59,25 @@ var client  = mqtt.connect(
     port: config.iot_port
   }
 );
+
+// Socket
+var io = require( 'socket.io' )( server );
+
+// New socket connection
+io.on( 'connection', function( socket ) {
+  // Listen for sensor event
+  // Broadcast when encountered
+  socket.on( 'emulator', function( data ) {
+    io.emit( 'sensor', data );
+  } );
+
+  // Listen for camera command
+  socket.on( 'photo', function( data ) {
+    client.publish( config.topic_photo, JSON.stringify( {
+      start: data  
+    } ) );
+  } );
+} );
 
 // Connected to Watson
 // Subscribe for sensor data
@@ -83,7 +90,11 @@ client.on( 'connect', function() {
 
   client.subscribe( config.topic_stream, function( error, granted ) {
     console.log( 'Streaming.' );
-  } );  
+  } );
+
+  client.subscribe( config.topic_visual, function( error, granted ) {
+    console.log( 'Visual.' );
+  } );
 } );
 
 // New message arrived
@@ -96,6 +107,8 @@ client.on( 'message', function( topic, message ) {
 
   if( topic == config.topic_stream ) {
     destination = 'stream';
+  } else if( topic == config.topic_visual ) {
+    destination = 'visual';
   } else {
     destination = 'sensor';
   }

@@ -1,6 +1,6 @@
 #include "HIH61XX/HIH61XX.h"
 
-#define PIN_PHOTOCELL A0
+#define PHOTOCELL_PIN A0
 #define REPORT_RATE 5
 #define SERIAL_DEBUG
 #define VERSION "0.3.0e"
@@ -13,12 +13,12 @@ void setup() {
   Wire.begin();
 
   #ifdef SERIAL_DEBUG
-      Serial.begin( 9600 );
+    Serial.begin( 9600 );
   #endif
 }
 
 void loop() {
-  char client[25];
+  char client[50];
   char content[255];
   char humidity[6];
   char temperature[6];
@@ -35,7 +35,7 @@ void loop() {
     String( hih.temperature(), 2 ).toCharArray( temperature, 6 );
     String( hih.humidity() * 100, 2 ).toCharArray( humidity, 6 );
 
-    photocell = analogRead( PIN_PHOTOCELL );
+    photocell = analogRead( PHOTOCELL_PIN );
     photocell = map( photocell, 0, 4095, 0, 100 );
 
     sprintf(

@@ -34,6 +34,7 @@ class Dashboard {
     this._socket = io();
     this._socket.on( 'stream', evt => this.doStreamMessage( evt ) );
     this._socket.on( 'sensor', evt => this.doSensorMessage( evt ) );
+    this._socket.on( 'visual', evt => this.doVisualMessage( evt ) );
   }
 
   doSensorCount( evt ) {
@@ -91,6 +92,11 @@ class Dashboard {
     this._language.analyze( evt.detail.handle );
   }
 
+  doVisualMessage( evt ) {
+    console.log( evt.detail.conversation.images[0].classifiers[0].classes );
+    this._tts.say( evt.detail.conversation.images[0].classifiers[0].classes[0].class );
+  }
+
   doWatsonConversation( evt ) {
     switch( evt.detail.conversation.intents[0].intent ) {
       case 'welcome':
@@ -109,6 +115,11 @@ class Dashboard {
       case 'impressed':
         this._tts.say( evt.detail.conversation.output.text );
         this._splash.show();
+        break;
+
+      case 'photo':
+        this._tts.say( evt.detail.conversation.output.text );      
+        this._socket.emit( 'photo', Date.now() );
         break;
     }
   }
