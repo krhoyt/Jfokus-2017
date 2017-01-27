@@ -1,0 +1,61 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="iot-gauge">
+
+  <template>
+    <style>
+      :host {
+        display: flex;
+        flex-direction: column;
+      }
+
+      div {
+        align-items: center;
+        display: flex;
+        flex-basis: 0;
+        flex-direction: column;
+        flex-grow: 1;
+        justify-content: center;
+      }
+
+      svg {
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <div>
+      <svg>
+        <circle cx="50%" cy="50%" r="40%" fill="rgba( 255, 255, 255, 0.45 )" stroke="none"></circle>
+        <path fill="white" stroke="none" d$="[[path]]"></path>        
+        <circle cx="50%" cy="50%" r="33%" fill$="[[color]]"></circle>
+        <text x="50%" y="42%" text-anchor="middle" fill="rgba( 255, 255, 255, 0.45 )">[[units]]</text>        
+        <text x="50%" y="65%" text-anchor="middle" fill="white">[[value]]%</text>
+      </svg>
+    </div>
+  </template>
+
+  <script>
+    class Gauge extends Polymer.Element {
+      static get is() { return 'iot-gauge'; }
+
+      static get config() {
+        return {
+        	properties: {
+            color: String,
+            path: String,
+            units: String,
+            value: Number
+          }
+        };
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+      }
+    }
+
+    customElements.define( Gauge.is, Gauge );
+  </script>
+		
+</dom-module>
