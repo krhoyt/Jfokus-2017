@@ -118,11 +118,11 @@ class Dashboard {
   }
 
   doVisualMessage( evt ) {
-    console.log( evt );    
+    console.log( evt );
 
     // evt.images[0].classifiers[0].classes.sort( this.compare );
     this._tts.transcript = 'This looks like ' + evt.images[0].classifiers[0].classes[0].class;
-    this._splash.show( evt.image_url );
+    this._splash.show( '/uploads/' + evt.images[0].image );
   }
 
   doWatsonConversation( evt ) {

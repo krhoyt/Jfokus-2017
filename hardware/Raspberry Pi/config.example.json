@@ -1,0 +1,10 @@
+{
+  "api_key": "159b1915dc0d7456e32ab7ac456764e5746989a8",
+  "client_id": "d:ts123z:Pi:IBM",
+  "iot_command": "iot-2/cmd/photo/fmt/json",
+  "iot_event": "iot-2/evt/photo/fmt/json",
+  "iot_host": "ts123z.messaging.internetofthings.ibmcloud.com",
+  "iot_token": "DqeTpKG17N-N9Y3gOEU",
+  "upload_image": "jfokus.jpg",
+  "upload_url": "https://jfokus2017.mybluemix.net/api/visual/recognize"
+}
