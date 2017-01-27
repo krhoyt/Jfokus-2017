@@ -5,7 +5,6 @@
   <template>
     <style>
       :host {
-        background-image: url( /img/not.impressed.jpg );
         background-position: center;
         background-repeat: none;
         background-size: cover;
@@ -16,7 +15,16 @@
         right: 0;
         visibility: hidden;
       }
+
+      img {
+        position: absolute;
+        left: 0;
+        top: 0;
+        visibility: hidden;
+      }
     </style>
+
+    <img id="preload">
   </template>
 
   <script>
@@ -33,17 +41,34 @@
 
       connectedCallback() {
         super.connectedCallback();
+        this.$.preload.addEventListener( 'load', evt => this.doLoad( evt ) );
         this.addEventListener( 'click', evt => this.doClick( evt ) );
       }
 
-      show() {
-        this.style.visibility = 'visible';
+      change( path ) {
+        this.style.backgroundImage = 'url( ' + path + ' )';
+        this.style.visibility = 'visible';        
+      }
+
+      show( path='/img/not.impressed.jpg', preload=true ) {
+        if( preload ) {
+          this.$.preload.src = path;
+        } else {
+          this.change( path );
+        }
       }
 
       doClick( evt ) {
         this.style.visibility = 'hidden';
       }
+
+      doLoad( evt ) {
+        this.change( this.$.preload.src );
+        this.dispatchEvent( new CustomEvent( ImageSplash.PRELOAD, null ) );
+      }
     }
+
+    ImageSplash.PRELOAD = 'splash-preload';
 
     customElements.define( ImageSplash.is, ImageSplash );
   </script>

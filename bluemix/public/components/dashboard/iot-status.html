@@ -64,7 +64,12 @@
       <p>[[count]]</p>
       <p>sensors.</p>  
     </div>
-    <div on-click="doLogoClick"></div>  
+    <div 
+      id="logo" 
+      on-click="doLogoClick" 
+      on-dragover="doLogoDrag" 
+      on-drop="doLogoDrop">
+    </div>  
     <div>
       <img src="/img/help.svg" width="22" height="22" on-click="doHelpClick">
     </div>    
@@ -103,12 +108,41 @@
         
         this.dispatchEvent( new CustomEvent( custom, null ) );
       }      
+
+      doLogoDrag( evt ) {
+        evt.stopPropagation();
+        evt.preventDefault();
+
+        evt.dataTransfer.dropEffect = 'copy';
+
+        // Show user that we are ready
+        // capture.classList.remove( 'microphone' );
+        // capture.classList.add( 'file' );
+      }
+
+      doLogoDrop( evt ) {
+        var source = null;
+        
+        console.log( evt );
+
+        evt.stopPropagation();
+        evt.preventDefault();
+        
+        if( evt.dataTransfer.files[0].type.indexOf( 'image' ) >= 0 ) {
+          this.dispatchEvent( new CustomEvent( Status.DROP_IMAGE, {
+            detail: {
+              source: evt.dataTransfer.files[0]
+            }
+          } ) );          
+        }
+      }
     }
 
-    Status.ALT_CLICK = 'alt-click';
-    Status.HELP_CLICK = 'help-click';
-    Status.LEFT_CLICK = 'left-click';
-    Status.SHIFT_CLICK = 'shift-click';
+    Status.ALT_CLICK = 'status-alt-click';
+    Status.HELP_CLICK = 'status-help-click';
+    Status.LEFT_CLICK = 'status-left-click';
+    Status.SHIFT_CLICK = 'status-shift-click';
+    Status.DROP_IMAGE = 'status-drop-image';
 
     customElements.define( Status.is, Status );
   </script>

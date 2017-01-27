@@ -14,6 +14,7 @@ class Dashboard {
     this._status.addEventListener( Status.HELP_CLICK, evt => this.doStatusHelp( evt ) );    
     this._status.addEventListener( Status.LEFT_CLICK, evt => this.doStatusLeft( evt ) );    
     this._status.addEventListener( Status.SHIFT_CLICK, evt => this.doStatusShift( evt ) );
+    this._status.addEventListener( Status.DROP_IMAGE, evt => this.doStatusDrop( evt ) );
 
     this._twitter = document.querySelector( 'twitter-field' );
     this._twitter.addEventListener( TwitterField.ENTER, evt => this.doTwitterAnalyze( evt ) );
@@ -29,12 +30,28 @@ class Dashboard {
     this._language = document.querySelector( 'watson-language' );
     this._language.addEventListener( WatsonLanguage.COMPLETE, evt => this.doWatsonLanguage( evt ) );    
 
+    this._visual = document.querySelector( 'watson-visual' );
+    this._visual.addEventListener( WatsonVisual.COMPLETE, evt => this.doWatsonVisual( evt ) );
+
     this._splash = document.querySelector( 'image-splash' );
+    this._splash.addEventListener( ImageSplash.PRELOAD, evt => this.doSplashPreload( evt ) );
 
     this._socket = io();
     this._socket.on( 'stream', evt => this.doStreamMessage( evt ) );
     this._socket.on( 'sensor', evt => this.doSensorMessage( evt ) );
     this._socket.on( 'visual', evt => this.doVisualMessage( evt ) );
+  }
+
+  compare( a, b ) {
+    if( a.score > b.score ) {
+      return -1;
+    }
+
+    if( a.score < b.score ) {
+      return 1;
+    }
+
+    return 0;
   }
 
   doSensorCount( evt ) {
@@ -49,9 +66,17 @@ class Dashboard {
     this._light.push( data );
   }
 
+  doSplashPreload( evt ) {
+    this._tts.say( this._tts.transcript );    
+  }
+
   // Toggle orientation
   doStatusAlt( evt ) {
     this._orientation.toggle();
+  }
+
+  doStatusDrop( evt ) {
+    this._visual.recognize( evt.detail.source );
   }
 
   // Get some help
@@ -93,8 +118,11 @@ class Dashboard {
   }
 
   doVisualMessage( evt ) {
-    console.log( evt.detail.conversation.images[0].classifiers[0].classes );
-    this._tts.say( evt.detail.conversation.images[0].classifiers[0].classes[0].class );
+    console.log( evt );    
+
+    // evt.images[0].classifiers[0].classes.sort( this.compare );
+    this._tts.transcript = 'This looks like ' + evt.images[0].classifiers[0].classes[0].class;
+    this._splash.show( evt.image_url );
   }
 
   doWatsonConversation( evt ) {
@@ -113,7 +141,7 @@ class Dashboard {
         break;
 
       case 'impressed':
-        this._tts.say( evt.detail.conversation.output.text );
+        this._tts.transcript = evt.detail.conversation.output.text;
         this._splash.show();
         break;
 
@@ -135,6 +163,14 @@ class Dashboard {
 
   doWatsonTranscript( evt ) {
     this._conversation.intent( evt.detail.transcript );
+  }
+
+  doWatsonVisual( evt ) {
+    console.log( evt.detail.content );
+
+    // evt.detail.content.images[0].classifiers[0].classes.sort( this.compare );
+    this._tts.transcript = 'This looks like ' + evt.detail.content.images[0].classifiers[0].classes[0].class;
+    this._splash.show( '/uploads/' + evt.detail.content.images[0].image );   
   }
 
 }

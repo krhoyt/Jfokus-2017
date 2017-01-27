@@ -39,6 +39,7 @@ app.use( '/api', require( './routes/language' ) );
 app.use( '/api', require( './routes/sensor' ) );
 app.use( '/api', require( './routes/stt' ) );
 app.use( '/api', require( './routes/tts' ) );
+app.use( '/api', require( './routes/visual' ) );
 
 // Bluemix
 var env = cfenv.getAppEnv();

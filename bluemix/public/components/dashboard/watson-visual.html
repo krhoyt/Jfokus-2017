@@ -1,0 +1,66 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="watson-visual">
+
+  <template>
+    <style>
+      :host {
+        display: none;
+        position: absolute;
+      }      
+    </style>
+  </template>
+
+  <script>
+    class WatsonVisual extends Polymer.Element {
+      static get is() { return 'watson-visual'; }
+
+      static get config() {
+        return {
+          properties: {
+            xhr: Object
+          }
+        };
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+      }
+
+      recognize( source ) {
+        var form = null;
+
+        form = new FormData();
+        form.append( 'attachment', source );
+
+        this.xhr = new XMLHttpRequest();
+        this.xhr.addEventListener( 'load', evt => this.doLoad( evt ) );
+        this.xhr.open( 'POST', WatsonVisual.RECOGNIZE, true );
+        this.xhr.send( form );
+      }
+
+      doLoad( evt ) {
+        var data = null;
+
+        data = JSON.parse( this.xhr.responseText );    
+
+        console.log( data );
+
+        this.xhr.removeEventListener( 'load', this.doLoad );
+        this.xhr = null;
+
+        this.dispatchEvent( new CustomEvent( WatsonVisual.COMPLETE, {
+          detail: {
+            content: data
+          }
+        } ) );
+      }
+    }
+
+    WatsonVisual.RECOGNIZE = '/api/visual/recognize';
+    WatsonVisual.COMPLETE = 'watson-visual-complete';
+
+    customElements.define( WatsonVisual.is, WatsonVisual );
+  </script>
+		
+</dom-module>
