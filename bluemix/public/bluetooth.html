@@ -1,0 +1,52 @@
+<html>
+<head>
+
+<title>Bluetooth</title>
+
+</head>
+<body>
+
+<button></button>
+
+<script>
+var gesture = document.querySelector( 'button' );
+
+gesture.addEventListener( 'click', doGestureClick );
+
+function doGestureClick() {
+  // Step 1: Scan for a device with 0xffe5 service
+  navigator.bluetooth.requestDevice( {
+    filters: [
+      {name: 'Bean+'}
+    ],
+    optionalServices: ['a495ff20-c5b1-4b44-b512-1370f02d74de']
+  } ).then( function( device ) {
+    // Step 2: Connect to it
+    device.addEventListener( 'gattserverdisconnected', function( evt ) {
+      console.log( 'Disconnected.' );
+    } );
+    return device.gatt.connect();
+  } ).then( function( server ) {
+    // Step 3: Get the Service
+    return server.getPrimaryService( 'a495ff20-c5b1-4b44-b512-1370f02d74de' );
+  } ).then( function( service ) {
+    // Step 4: get the Characteristic
+    return service.getCharacteristic( 'a495ff21-c5b1-4b44-b512-1370f02d74de' );
+  } ).then( function( characteristic ) {
+    return characteristic.startNotifications();
+  } ).then( function( characteristic ) {
+    return characteristic.addEventListener( 'characteristicvaluechanged', function( evt ) {
+      var array = new Uint8Array( evt.target.value.buffer );
+      var content = String.fromCharCode.apply( String, array );
+      var parts = content.split( ',' );
+      console.log( parts );
+    } );
+  } ).catch( function( error ) {
+    // And of course: error handling!
+    console.error( 'Connection failed.', error );
+  } );   
+}
+</script>
+
+</body>
+</html>

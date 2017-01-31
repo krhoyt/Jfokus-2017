@@ -1,16 +1,16 @@
-#include "HIH61XX/HIH61XX.h"
+#include <Particle_SI7021.h>
 
 #define PHOTOCELL_PIN A0
 #define REPORT_RATE 5
 #define SERIAL_DEBUG
-#define VERSION "0.3.0e"
+#define VERSION "0.4.0e"
 
-HIH61XX hih( 0x27, D3 );
+SI7021 sensor;
 
 long last = 0;
 
 void setup() {
-  Wire.begin();
+  sensor.begin();
 
   #ifdef SERIAL_DEBUG
     Serial.begin( 9600 );
@@ -20,8 +20,6 @@ void setup() {
 void loop() {
   char client[50];
   char content[255];
-  char humidity[6];
-  char temperature[6];
   int photocell;
 
   if( ( Time.now() - last ) >= REPORT_RATE ) {
@@ -29,21 +27,15 @@ void loop() {
 
     System.deviceID().toCharArray( client, 50 );
 
-    hih.start();
-    hih.update();
-
-    String( hih.temperature(), 2 ).toCharArray( temperature, 6 );
-    String( hih.humidity() * 100, 2 ).toCharArray( humidity, 6 );
-
     photocell = analogRead( PHOTOCELL_PIN );
     photocell = map( photocell, 0, 4095, 0, 100 );
 
     sprintf(
       content,
-      "Electron,IBM,%s,%s,%s,%u,%lu,231,126,36",
+      "Electron,IBM,%s,%u,%u,%u,%lu,231,126,36",
       client,
-      temperature,
-      humidity,
+      sensor.getCelsiusHundredths() / 100,
+      sensor.getHumidityPercent(),
       photocell,
       Time.now()
     );
