@@ -54,6 +54,16 @@ class Dashboard {
     return 0;
   }
 
+  visual( data ) {
+    var list = [];
+
+    for( var c = 0; c < data.images[0].classifiers[0].classes.length; c++ ) {
+      list.push( data.images[0].classifiers[0].classes[c].class );
+    }
+
+    console.log( list );
+  }
+
   doSensorCount( evt ) {
     this._status.count = evt.detail.count;
   }
@@ -119,6 +129,7 @@ class Dashboard {
 
   doVisualMessage( evt ) {
     console.log( evt );
+    this.visual( evt );
 
     // evt.images[0].classifiers[0].classes.sort( this.compare );
     this._tts.transcript = 'This looks like ' + evt.images[0].classifiers[0].classes[0].class;
@@ -167,6 +178,7 @@ class Dashboard {
 
   doWatsonVisual( evt ) {
     console.log( evt.detail.content );
+    this.visual( evt.detail.content );
 
     // evt.detail.content.images[0].classifiers[0].classes.sort( this.compare );
     this._tts.transcript = 'This looks like ' + evt.detail.content.images[0].classifiers[0].classes[0].class;
