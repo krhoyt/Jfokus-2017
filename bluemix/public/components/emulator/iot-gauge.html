@@ -84,7 +84,7 @@
 
       start() {
         this.animation = TweenMax.to( this, this.rate, {
-          value: Math.random() * 100,
+          value: ( Math.random() * 98 ) + 1,
           ease: Power2.easeInOut,
           onComplete: this.doComplete,
           onCompleteParams: [this],

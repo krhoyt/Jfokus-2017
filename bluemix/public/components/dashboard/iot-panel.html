@@ -76,18 +76,17 @@
               );
             }
 
-            for( var v = 0; v < this._history[client].values.length; v++ ) {
-              if( this._history[client].values[v] < minimum ) {
-                minimum = this._history[client].values[v];
-              }
+            found = true;
+          }
 
-              if( this._history[client].values[v] > maximum ) {
-                maximum = this._history[client].values[v];
-              }
+          for( var v = 0; v < this._history[client].values.length; v++ ) {
+            if( this._history[client].values[v] < minimum ) {
+              minimum = this._history[client].values[v];
             }
 
-            found = true;
-            break;
+            if( this._history[client].values[v] > maximum ) {
+              maximum = this._history[client].values[v];
+            }
           }
         }
 
