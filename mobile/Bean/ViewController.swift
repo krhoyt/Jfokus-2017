@@ -10,6 +10,11 @@ class ViewController: UIViewController, CBCentralManagerDelegate, CBPeripheralDe
     let BEAN_SCRATCH_UUID = CBUUID(string: "a495ff21-c5b1-4b44-b512-1370f02d74de")
     let BEAN_SERVICE_UUID = CBUUID(string: "a495ff20-c5b1-4b44-b512-1370f02d74de")
     
+    @IBOutlet weak var lblTemperature: UILabel!
+    @IBOutlet weak var lblHumidity: UILabel!
+    @IBOutlet weak var lblLight: UILabel!
+    @IBOutlet weak var stkReading: UIStackView!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         manager = CBCentralManager(delegate: self, queue: nil)
@@ -81,6 +86,10 @@ class ViewController: UIViewController, CBCentralManagerDelegate, CBPeripheralDe
             let temperature = Float(values![0])
             let humidity = Int(values![1])
             let light = Int(values![2])
+            
+            lblTemperature.text = values?[0]
+            lblHumidity.text = values?[1]
+            lblLight.text = values?[2]
             
             debugPrint(temperature!, humidity!, light!)
         }
