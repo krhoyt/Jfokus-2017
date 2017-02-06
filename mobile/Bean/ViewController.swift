@@ -1,4 +1,5 @@
 import CoreBluetooth
+import SwiftyJSON
 import UIKit
 
 class ViewController: UIViewController, CBCentralManagerDelegate, CBPeripheralDelegate {
@@ -82,16 +83,35 @@ class ViewController: UIViewController, CBCentralManagerDelegate, CBPeripheralDe
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         if characteristic.uuid == BEAN_SCRATCH_UUID {
             let content = String(data: characteristic.value!, encoding: String.Encoding.utf8)
-            let values = content?.components(separatedBy: ",")
-            let temperature = Float(values![0])
-            let humidity = Int(values![1])
-            let light = Int(values![2])
+            let values:[String]? = content?.components(separatedBy: ",")
+            debugPrint(values[0])
+            /*
+            let temperature = Int(Float(values[0]))
+            let humidity = Int(values[1])
+            let light = Int(values[2])
             
             lblTemperature.text = values?[0]
             lblHumidity.text = values?[1]
             lblLight.text = values?[2]
+
+            let json = JSON([
+                "type": "Bean",
+                "id": "IBM",
+                "client": UUID().uuidString,
+                "temperature": temperature,
+                "humidity": humidity,
+                "light": light,
+                "timestamp": Date().timeIntervalSince1970,
+                "color": [
+                    "red": 0,
+                    "green": 173,
+                    "blue": 238
+                ]
+            ])
             
-            debugPrint(temperature!, humidity!, light!)
+            debugPrint(temperature, humidity, light)
+            debugPrint(json)
+ */
         }
     }
     

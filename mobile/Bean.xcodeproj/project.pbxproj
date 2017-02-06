@@ -12,6 +12,7 @@
 		0A7BB3A11E433C0F00EB0D0E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 0A7BB39F1E433C0F00EB0D0E /* Main.storyboard */; };
 		0A7BB3A31E433C0F00EB0D0E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0A7BB3A21E433C0F00EB0D0E /* Assets.xcassets */; };
 		0A7BB3A61E433C0F00EB0D0E /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 0A7BB3A41E433C0F00EB0D0E /* LaunchScreen.storyboard */; };
+		4752554D0B6395B235295B39 /* Pods_Bean.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9FF90867C40E7852CE81778E /* Pods_Bean.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -22,6 +23,9 @@
 		0A7BB3A21E433C0F00EB0D0E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		0A7BB3A51E433C0F00EB0D0E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		0A7BB3A71E433C0F00EB0D0E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		564E6EF2ED2312075F3C4228 /* Pods-Bean.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Bean.debug.xcconfig"; path = "Pods/Target Support Files/Pods-Bean/Pods-Bean.debug.xcconfig"; sourceTree = "<group>"; };
+		9FF90867C40E7852CE81778E /* Pods_Bean.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Bean.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		A5AA340A937ED663640CACAE /* Pods-Bean.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Bean.release.xcconfig"; path = "Pods/Target Support Files/Pods-Bean/Pods-Bean.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -29,6 +33,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4752554D0B6395B235295B39 /* Pods_Bean.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -40,6 +45,8 @@
 			children = (
 				0A7BB39A1E433C0F00EB0D0E /* Bean */,
 				0A7BB3991E433C0F00EB0D0E /* Products */,
+				0F45B18FDAD8589435E03401 /* Pods */,
+				1AC6394DB0C413FBEB0686A5 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -64,6 +71,23 @@
 			path = Bean;
 			sourceTree = "<group>";
 		};
+		0F45B18FDAD8589435E03401 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				564E6EF2ED2312075F3C4228 /* Pods-Bean.debug.xcconfig */,
+				A5AA340A937ED663640CACAE /* Pods-Bean.release.xcconfig */,
+			);
+			name = Pods;
+			sourceTree = "<group>";
+		};
+		1AC6394DB0C413FBEB0686A5 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				9FF90867C40E7852CE81778E /* Pods_Bean.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -71,9 +95,12 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 0A7BB3AA1E433C0F00EB0D0E /* Build configuration list for PBXNativeTarget "Bean" */;
 			buildPhases = (
+				7B60D28BDAF78D87A3388D1D /* [CP] Check Pods Manifest.lock */,
 				0A7BB3941E433C0F00EB0D0E /* Sources */,
 				0A7BB3951E433C0F00EB0D0E /* Frameworks */,
 				0A7BB3961E433C0F00EB0D0E /* Resources */,
+				298317B3F0416981E1C000C6 /* [CP] Embed Pods Frameworks */,
+				FF7534DF3D5EA9A0732D5042 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -131,6 +158,54 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		298317B3F0416981E1C000C6 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-Bean/Pods-Bean-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		7B60D28BDAF78D87A3388D1D /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
+			showEnvVarsInLog = 0;
+		};
+		FF7534DF3D5EA9A0732D5042 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Copy Pods Resources";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-Bean/Pods-Bean-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		0A7BB3941E433C0F00EB0D0E /* Sources */ = {
@@ -259,6 +334,7 @@
 		};
 		0A7BB3AB1E433C0F00EB0D0E /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 564E6EF2ED2312075F3C4228 /* Pods-Bean.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				DEVELOPMENT_TEAM = ER47H7CD55;
@@ -272,6 +348,7 @@
 		};
 		0A7BB3AC1E433C0F00EB0D0E /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A5AA340A937ED663640CACAE /* Pods-Bean.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				DEVELOPMENT_TEAM = ER47H7CD55;

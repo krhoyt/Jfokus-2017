@@ -11,7 +11,7 @@ class Dashboard {
 
     this._status = document.querySelector( 'iot-status' );
     this._status.addEventListener( Status.ALT_CLICK, evt => this.doStatusAlt( evt ) );
-    this._status.addEventListener( Status.HELP_CLICK, evt => this.doStatusHelp( evt ) );    
+    this._status.addEventListener( Status.BLE_DATA, evt => this.doStatusData( evt ) );
     this._status.addEventListener( Status.LEFT_CLICK, evt => this.doStatusLeft( evt ) );    
     this._status.addEventListener( Status.SHIFT_CLICK, evt => this.doStatusShift( evt ) );
     this._status.addEventListener( Status.DROP_IMAGE, evt => this.doStatusDrop( evt ) );
@@ -85,13 +85,12 @@ class Dashboard {
     this._orientation.toggle();
   }
 
-  doStatusDrop( evt ) {
-    this._visual.recognize( evt.detail.source );
+  doStatusData( evt ) {
+    this._socket.emit( 'ble', evt.detail );
   }
 
-  // Get some help
-  doStatusHelp( evt ) {
-    window.open( 'http://twitter.com/krhoyt' );
+  doStatusDrop( evt ) {
+    this._visual.recognize( evt.detail.source );
   }
 
   // Invoke speech-to-text

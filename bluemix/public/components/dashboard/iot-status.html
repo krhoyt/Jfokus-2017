@@ -1,4 +1,5 @@
 <link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../components/dashboard/web-bluetooth.html">
 
 <dom-module id="iot-status">
 
@@ -31,10 +32,6 @@
         justify-content: flex-end;
       }
 
-      div:nth-of-type( 3 ):hover {
-        opacity: 1.0;
-      }
-
       div > p {
         color: rgba( 255, 255, 255, 0.65 );  
         font-size: 18px;
@@ -49,14 +46,6 @@
         font-weight: 700;
         padding: 0 8px 0 8px;
       }
-
-      img {
-        opacity: 0.65;
-      }
-
-      img:hover {
-        opacity: 1.0;
-      }
     </style>
 
     <div>
@@ -70,9 +59,9 @@
       on-dragover="doLogoDrag" 
       on-drop="doLogoDrop">
     </div>  
-    <div>
-      <img src="/img/help.svg" width="22" height="22" on-click="doHelpClick">
-    </div>    
+    <div>    
+      <web-bluetooth id="ble"></web-bluetooth>
+    </div>
   </template>
 
   <script>
@@ -89,10 +78,12 @@
 
       connectedCallback() {
         super.connectedCallback();
-      }
 
-      doHelpClick( evt ) {
-        this.dispatchEvent( new CustomEvent( Status.HELP_CLICK, null ) );
+        this.$.ble.addEventListener( Bluetooth.SENSOR_CHANGE, evt => { 
+          this.dispatchEvent( new CustomEvent( Status.BLE_DATA, {
+            detail: evt.detail
+          } ) );
+        } );
       }
 
       doLogoClick( evt ) {
@@ -139,7 +130,7 @@
     }
 
     Status.ALT_CLICK = 'status-alt-click';
-    Status.HELP_CLICK = 'status-help-click';
+    Status.BLE_DATA = 'status-ble-data';
     Status.LEFT_CLICK = 'status-left-click';
     Status.SHIFT_CLICK = 'status-shift-click';
     Status.DROP_IMAGE = 'status-drop-image';

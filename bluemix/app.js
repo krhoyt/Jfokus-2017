@@ -78,6 +78,11 @@ io.on( 'connection', function( socket ) {
       start: data  
     } ) );
   } );
+
+  // Listen for Bluetooth data
+  socket.on( 'ble', function( data ) {
+    client.publish( 'iot-2/type/Bean/id/IBM/evt/stacks/fmt/json', JSON.stringify( data ) );
+  } );
 } );
 
 // Connected to Watson

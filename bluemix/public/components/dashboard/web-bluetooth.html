@@ -1,0 +1,146 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="web-bluetooth">
+
+  <template>
+    <style>
+      button {
+        background: none;
+        border: none;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: contain;
+        height: 22px;
+        margin: 0;
+        opacity: 0.65;        
+        outline: none;
+        padding: 0;
+        width: 22px;
+      }
+
+      button:hover {
+        opacity: 1.0;
+      }
+
+      button.connected {
+        background-image: url( '/img/bluetooth.connected.svg' );
+      }
+
+      button.searching {
+        background-image: url( '/img/bluetooth.searching.svg' );
+      }
+
+      button.waiting {
+        background-image: url( '/img/bluetooth.svg' );
+      }
+    </style>
+
+    <button id="ble" class="waiting" on-click="doBluetooth"></button>
+  </template>
+
+  <script>
+    class Bluetooth extends Polymer.Element {
+      static get is() { return 'web-bluetooth'; }
+
+      static get config() {
+        return {
+        	properties: {
+            connected: Boolean,
+            bluetooth: Object
+        	}
+        };
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+      }
+
+      doBluetooth( evt ) {
+        if( this.connected ) {
+          this.disconnect();
+        } else {
+          this.connect();
+        }
+      }
+
+      connect() {
+        this.$.ble.classList.remove( 'waiting' );
+        this.$.ble.classList.add( 'searching' );
+
+        navigator.bluetooth.requestDevice( { 
+          filters: [
+            {name: Bluetooth.BEAN_NAME}
+          ],
+          optionalServices: [Bluetooth.BEAN_SERVICE] 
+        } )
+        .then( device => {
+          this.bluetooth = device;
+          this.bluetooth.addEventListener( 'gattserverdisconnected', evt => this.doDisconnected( evt ) );
+
+          return this.bluetooth.gatt.connect() 
+        } )
+        .then( server => server.getPrimaryService( Bluetooth.BEAN_SERVICE ) )
+        .then( service => service.getCharacteristic( Bluetooth.BEAN_CHARACTERISTIC ) )
+        .then( characteristic => {
+          this.$.ble.classList.remove( 'searching' );
+          this.$.ble.classList.add( 'connected' );
+
+          this.connected = true;
+
+          return characteristic.startNotifications();
+        } )
+        .then( characteristic => {
+          characteristic.addEventListener(
+            'characteristicvaluechanged',
+            evt => this.doCharacteristicChanged( evt )
+          );
+        } )
+        .catch( error => { 
+          console.log( error ); 
+        } );
+      }
+
+      disconnect() {
+        this.$.ble.classList.remove( 'connected' );
+        this.$.ble.classList.add( 'waiting' );
+
+        this.bluetooth.gatt.disconnect();
+      }
+
+      doCharacteristicChanged( evt ) {
+        var array = new Uint8Array( evt.target.value.buffer );
+        var content = String.fromCharCode.apply( String, array );
+        var parts = content.split( ',' );
+  
+        this.dispatchEvent( new CustomEvent( Bluetooth.SENSOR_CHANGE, {
+          detail: {
+            type: 'Bean',
+            id: 'IBM',
+            client: 'abc123',
+            temperature: parseFloat( parts[0] ),
+            humidity: parseInt( parts[1] ),
+            light: parseInt( parts[2] ),
+            timestamp: Date.now(),
+            color: {
+              red: 0,
+              green: 173,
+              blue: 238,
+            }
+          }
+        } ) );
+      }
+
+      doDisconnected( evt ) {
+        console.log( 'Disconnected.' );
+      }
+    }
+
+    Bluetooth.BEAN_CHARACTERISTIC = 'a495ff21-c5b1-4b44-b512-1370f02d74de';
+    Bluetooth.BEAN_NAME = 'Bean+';
+    Bluetooth.BEAN_SERVICE = 'a495ff20-c5b1-4b44-b512-1370f02d74de';
+    Bluetooth.SENSOR_CHANGE = 'ble-sensor-change';
+
+    customElements.define( Bluetooth.is, Bluetooth );
+  </script>
+		
+</dom-module>

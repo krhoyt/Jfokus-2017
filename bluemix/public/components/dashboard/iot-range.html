@@ -58,7 +58,7 @@
       <p>[[maximum]]</p>
       <p>[[units]]</p>
     </div>  
-    <div>
+    <div on-click="doNow">
       <p>Now:</p>
       <p>[[current]]</p>
       <p>[[units]]</p>
@@ -82,6 +82,10 @@
 
       connectedCallback() {
         super.connectedCallback();
+      }
+
+      doNow() {
+        console.log( 'Toggle' );
       }
     }
 
