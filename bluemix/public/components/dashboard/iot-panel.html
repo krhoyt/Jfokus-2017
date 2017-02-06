@@ -90,6 +90,26 @@
           }
         }
 
+        /*
+        if( !found ) {
+          this._history.push( {
+            client: reading.client,
+            color: reading.color,
+            values: [reading[this.field]]
+          } );
+          minimum = reading[this.field];
+          maximum = reading[this.field];
+
+          this._count = this._count + 1;
+
+          this.dispatchEvent( new CustomEvent( Panel.SENSOR_COUNT, {
+            detail: {
+              count: this._count
+            }
+          } ) );          
+        }
+        */
+
         if( !found ) {
           this._history[reading.client] = {
             color: reading.color,
@@ -109,7 +129,8 @@
 
         this.$.range.minimum = Math.round( minimum );
         this.$.range.maximum = Math.round( maximum );
-        this.$.range.current = Math.round( reading[this.field] );
+        // this.$.range.current = Math.round( reading[this.field] );
+        this.$.range.push( reading.client, reading.color, reading[this.field] );
         this.$.chart.draw( this._history );
       }
     }

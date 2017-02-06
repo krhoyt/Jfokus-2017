@@ -10,6 +10,7 @@
       }
 
       div {
+        cursor: default;
         display: flex;
         flex-basis: 0;
         flex-direction: row;
@@ -58,7 +59,7 @@
       <p>[[maximum]]</p>
       <p>[[units]]</p>
     </div>  
-    <div on-click="doNow">
+    <div id="current" on-click="doNow">
       <p>Now:</p>
       <p>[[current]]</p>
       <p>[[units]]</p>
@@ -75,6 +76,8 @@
             current: Number,
             maximum: Number,
             minimum: Number,
+            readings: Array,
+            showing: Number,
             units: String
         	}
         };
@@ -82,10 +85,51 @@
 
       connectedCallback() {
         super.connectedCallback();
+        this.readings = [];
+      }
+
+      change() {
+        this.$.current.style.color = 
+          'rgb( ' + 
+          this.readings[this.showing].color.red + ', ' +
+          this.readings[this.showing].color.green + ', ' +
+          this.readings[this.showing].color.blue + 
+          ' )';
+        this.current = Math.round( this.readings[this.showing].current );        
+      }
+
+      push( client, color, current ) {
+        var found = false;
+
+        for( var c = 0; c < this.readings.length; c++ ) {
+          if( this.readings[c].client == client ) {
+            found = true;
+            break;
+          }
+        }
+
+        if( !found ) {
+          this.readings.push( {
+            client: client,
+            color: color,
+            current: current
+          } );
+          this.showing = this.readings.length - 1;
+        } else {
+          this.readings[c].current = current;
+        }
+
+        this.change();
       }
 
       doNow() {
-        console.log( 'Toggle' );
+        if( this.showing == ( this.readings.length - 1 ) ) {
+          this.showing = 0;
+        } else {
+          this.showing = this.showing + 1;
+        }
+
+        this.change();
       }
     }
 

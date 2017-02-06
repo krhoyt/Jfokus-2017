@@ -40,6 +40,8 @@ class Dashboard {
     this._socket.on( 'stream', evt => this.doStreamMessage( evt ) );
     this._socket.on( 'sensor', evt => this.doSensorMessage( evt ) );
     this._socket.on( 'visual', evt => this.doVisualMessage( evt ) );
+
+    this.logging = true;
   }
 
   compare( a, b ) {
@@ -69,7 +71,9 @@ class Dashboard {
   }
 
   doSensorMessage( data ) {
-    console.log( data );    
+    if( this.logging ) {
+      console.log( data );          
+    }
 
     this._temperature.push( data );
     this._humidity.push( data );
@@ -186,4 +190,4 @@ class Dashboard {
 
 }
 
-let dasboard = new Dashboard();
+let dashboard = new Dashboard();
