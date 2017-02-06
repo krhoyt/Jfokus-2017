@@ -3,13 +3,15 @@
 #define PHOTOCELL_PIN A0
 #define REPORT_RATE 1
 #define SERIAL_DEBUG
-#define VERSION "0.2.0p"
+#define VERSION "0.3.0p"
 
 SI7021 sensor;
 
 long last = 0;
 
 void setup() {
+  Particle.variable( "version", VERSION );
+
   sensor.begin();
 
   #ifdef SERIAL_DEBUG
@@ -18,14 +20,14 @@ void setup() {
 }
 
 void loop() {
-  char client[50];
+  char device[50];
   char content[255];
   int photocell;
 
   if( ( Time.now() - last ) >= REPORT_RATE ) {
     last = Time.now();
 
-    System.deviceID().toCharArray( client, 50 );
+    System.deviceID().toCharArray( device, 50 );
 
     photocell = analogRead( PHOTOCELL_PIN );
     photocell = map( photocell, 0, 4095, 0, 100 );
@@ -33,7 +35,7 @@ void loop() {
     sprintf(
       content,
       "Photon,IBM,%s,%u,%u,%u,%lu,0,174,239",
-      client,
+      device,
       sensor.getCelsiusHundredths() / 100,
       sensor.getHumidityPercent(),
       photocell,

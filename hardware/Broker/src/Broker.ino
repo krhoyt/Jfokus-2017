@@ -1,21 +1,19 @@
-#include "Constants.h"
+#include <Constants.h>
 #include <MQTT.h>
 #include <Particle_SI7021.h>
-#include <SparkJson.h>
 
 #define PHOTOCELL_PIN A0
+#define REPORT_RATE 1
 #define SERIAL_DEBUG
-#define VERSION "0.2.5p"
-
-void callback( char* topic, byte* payload, unsigned int length );
+#define VERSION "0.3.0w"
 
 MQTT client( Constants::IOT_HOST, 1883, callback );
 SI7021 sensor;
 
-char device[50];
+long last = 0;
 
 void setup() {
-  System.deviceID().toCharArray( device, 50 );
+  Particle.variable( "version", VERSION );
 
   sensor.begin();
 
@@ -25,59 +23,69 @@ void setup() {
 }
 
 void loop() {
-  int photocell;
-
   if( client.isConnected() ) {
-    photocell = analogRead( PHOTOCELL_PIN );
-    photocell = map( photocell, 0, 4095, 0, 100 );
+    if( ( Time.now() - last ) >= REPORT_RATE ) {
+      last = Time.now();
+      report();
+    }
 
-    StaticJsonBuffer<200> buffer;
-    JsonObject& json = buffer.createObject();
-    json["type"] = "Broker";
-    json["id"] = "IBM";
-    json["client"] = device;
-    json["temperature"] = ( sensor.getCelsiusHundredths() / 100 );
-    json["humidity"] = sensor.getHumidityPercent();
-    json["light"] = photocell;
-    json["timestamp"] = Time.now();
-
-    JsonObject& color = buffer.createObject();
-    color["red"] = 0;
-    color["green"] = 174;
-    color["blue"] = 239;
-
-    // json["color"] = color;
-
-    #ifdef SERIAL_DEBUG
-      json.printTo( Serial );
-    #endif
-
-    /*
-    client.publish(
-      Constants::IOT_TOPIC,
-      "{" +
-      "\"type\": \"Broker\", " +
-      "\"id\": \"IBM\", " +
-      "\"client\": \"" + device + "\", " +
-      "\"temperature\": " + ( sensor.getCelsiusHundredths() / 100 ) + ", " +
-      "\"humidity\": " + sensor.getHumidityPercent() + ", " +
-      "\"light\": " + photocell + ", " +
-      "\"timestamp\": " + Time.now() + ", " +
-      "\"color\": {" +
-      "\"red\": 0, " +
-      "\"green\": 174, " +
-      "\"blue\": 239 " +
-      "}" +
-      "}"
-    );
-    */
+    client.loop();
   } else {
     client.connect(
       Constants::IOT_CLIENT,
       Constants::IOT_USERNAME,
       Constants::IOT_PASSWORD
     );
-  }
 
-  client.loop();
+    #ifdef SERIAL_DEBUG
+      Serial.println( "Connected." );
+    #endif
+  }
+}
+
+void report() {
+  int photocell;
+  String content;
+
+  photocell = analogRead( PHOTOCELL_PIN );
+  photocell = map( photocell, 0, 4095, 0, 100 );
+
+  content =
+    "{ " +
+      "\"type\": \"Photon\", " +
+      "\"id\": \"IBM\", " +
+      "\"client\": \"" + System.deviceID() + "\", " +
+      "\"temperature\": " + String( sensor.getCelsiusHundredths() / 100 ) + ", " +
+      "\"humidity\": " + String( sensor.getHumidityPercent() ) + ", " +
+      "\"light\": " + String( photocell ) + ", " +
+      "\"timestamp\": " + String( Time.now() ) + ", " +
+      "\"color\": { " +
+        "\"red\": 0, " +
+        "\"green\": 174, " +
+        "\"blue\": 239 " +
+        "} " +
+    "}";
+
+  #ifdef SERIAL_DEBUG
+    Serial.println( content );
+  #endif
+
+  client.publish(
+    Constants::IOT_TOPIC,
+    content
+  );
+}
+
+void callback( char* topic, byte* payload, unsigned int length ) {
+  char p[length + 1];
+
+  memcpy( p, payload, length );
+  p[length] = NULL;
+
+  String message( p );
+
+  #ifdef SERIAL_DEBUG
+    Serial.print( "Message: " );
+    Serial.println( message );
+  #endif
 }

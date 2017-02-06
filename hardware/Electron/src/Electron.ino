@@ -10,6 +10,8 @@ SI7021 sensor;
 long last = 0;
 
 void setup() {
+  Particle.variable( "version", VERSION );
+
   sensor.begin();
 
   #ifdef SERIAL_DEBUG

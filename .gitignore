@@ -3,3 +3,4 @@ config.json
 reference
 bower_components
 *.bin
+Constants.h
