@@ -19,6 +19,9 @@ class Dashboard {
     this._twitter = document.querySelector( 'twitter-field' );
     this._twitter.addEventListener( TwitterField.ENTER, evt => this.doTwitterAnalyze( evt ) );
 
+    this._shortcut = document.querySelector( '.shortcut' );
+    this._shortcut.addEventListener( 'click', evt => this.doShortcutClick( evt ) );
+
     this._stt = document.querySelector( 'watson-stt' );
     this._stt.addEventListener( WatsonSTT.TRANSCRIPT, evt => this.doWatsonTranscript( evt ) );
 
@@ -56,6 +59,24 @@ class Dashboard {
     return 0;
   }
 
+  shortcut() {
+    if( this._shortcut.style.visibility == 'visible' ) {
+      TweenMax.to( this._shortcut, 0.50, {
+        bottom: 0,
+        onComplete: function( component ) {
+          component.style.visibility = 'hidden';
+        },
+        onCompleteParams: [this._shortcut]
+      } );
+    } else {
+      this._shortcut.style.visibility = 'visible';
+
+      TweenMax.to( this._shortcut, 0.50, {
+        bottom: 50
+      } );      
+    }
+  }
+
   visual( data ) {
     var list = [];
 
@@ -80,6 +101,10 @@ class Dashboard {
     this._light.push( data );
   }
 
+  doShortcutClick( evt ) {
+    window.open( this._shortcut.innerHTML.trim() );
+  }
+
   doSplashPreload( evt ) {
     this._tts.say( this._tts.transcript );    
   }
@@ -87,6 +112,7 @@ class Dashboard {
   // Toggle orientation
   doStatusAlt( evt ) {
     this._orientation.toggle();
+    this.shortcut();
   }
 
   doStatusData( evt ) {
@@ -152,6 +178,7 @@ class Dashboard {
       case 'audience':
         this._tts.say( evt.detail.conversation.output.text );
         this._orientation.show();
+        this.shortcut();
         break;
 
       case 'impressed':

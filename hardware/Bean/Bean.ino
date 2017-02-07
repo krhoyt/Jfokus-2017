@@ -2,6 +2,7 @@
 #include <Wire.h>
 
 HIH61XX hih( 0x27 );
+
 void setup() {
   Serial.begin( 9600 );
   

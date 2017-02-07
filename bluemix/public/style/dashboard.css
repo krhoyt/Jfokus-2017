@@ -37,3 +37,22 @@ twitter-field {
   position: absolute;  
   right: 0;
 }
+
+.shortcut {
+  background-color: rgba( 119, 27, 30, 0.80 );
+  bottom: 0;
+  color: white;
+  cursor: default;
+  font-family: 'Roboto', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  height: 50px;
+  left: 0;
+  line-height: 50px;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  right: 0;
+  text-align: center;
+  visibility: hidden;
+}

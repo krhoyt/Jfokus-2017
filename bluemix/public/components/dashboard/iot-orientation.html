@@ -77,11 +77,22 @@
       }
 
       hide() {
-        this.style.display = 'none';
+        TweenMax.to( this, 0.50, {
+          opacity: 0,
+          onComplete: function( component ) {
+            component.style.display = 'none';
+          }, 
+          onCompleteParams: [this]
+        } );        
       }
 
       show() {
+        this.style.opacity = 0;
         this.style.display = 'flex';
+
+        TweenMax.to( this, 0.50, {
+          opacity: 1
+        } );
       }
 
       toggle() {
