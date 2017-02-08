@@ -1,6 +1,7 @@
 #include <Constants.h>
 #include <MQTT.h>
 #include <Particle_SI7021.h>
+#include <SparkJson.h>
 
 #define PHOTOCELL_PIN A0
 #define REPORT_RATE 1
@@ -44,36 +45,45 @@ void loop() {
 }
 
 void report() {
+  char content[200];
   int photocell;
-  String content;
+  String device;
+
+  device = System.deviceID();
+  char client[device.length()];
+  device.toCharArray( client, device.length() );
 
   photocell = analogRead( PHOTOCELL_PIN );
   photocell = map( photocell, 0, 4095, 0, 100 );
 
-  content =
-    "{ " +
-      "\"type\": \"Photon\", " +
-      "\"id\": \"IBM\", " +
-      "\"client\": \"" + System.deviceID() + "\", " +
-      "\"temperature\": " + String( sensor.getCelsiusHundredths() / 100 ) + ", " +
-      "\"humidity\": " + String( sensor.getHumidityPercent() ) + ", " +
-      "\"light\": " + String( photocell ) + ", " +
-      "\"timestamp\": " + String( Time.now() ) + ", " +
-      "\"color\": { " +
-        "\"red\": 0, " +
-        "\"green\": 174, " +
-        "\"blue\": 239 " +
-        "} " +
-    "}";
+  StaticJsonBuffer<250> buffer;
+  JsonObject& doc = buffer.createObject();
+
+  doc["client"] = client;
+  doc["temperature"] = ( sensor.getCelsiusHundredths() / 100 );
+  doc["humidity"] = sensor.getHumidityPercent();
+  doc["light"] = photocell;
+  doc["timestamp"] = Time.now();
+  doc["type"] = "Photon";
+  doc["id"] = "IBM";
+
+  JsonObject& color = doc.createNestedObject( "color" );
+  color["red"] = 0;
+  color["green"] = 174;
+  color["blue"] = 239;
+
+  doc.printTo( content, sizeof( buffer ) );
 
   #ifdef SERIAL_DEBUG
     Serial.println( content );
   #endif
 
+  /*
   client.publish(
     Constants::IOT_TOPIC,
     content
   );
+  */
 }
 
 void callback( char* topic, byte* payload, unsigned int length ) {
