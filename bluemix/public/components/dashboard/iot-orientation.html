@@ -1,4 +1,5 @@
 <link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PreloadJS/0.6.0/preloadjs.min.js"></script>
 
 <dom-module id="iot-orientation">
 
@@ -69,6 +70,16 @@
 
         window.addEventListener( 'resize', evt => this.doWindowResize( evt ) );
         this.layout();
+
+        var queue = new createjs.LoadQueue();
+        queue.loadFile( {
+          id: 'svg', 
+          src: '/img/portrait.svg' 
+        } );
+        queue.loadFile( {
+          id: 'svg', 
+          src: '/img/landscape.svg' 
+        } );        
       }
 
       layout() {
