@@ -1,17 +1,15 @@
 #include <Particle_SI7021.h>
 
 #define PHOTOCELL_PIN A0
-#define REPORT_RATE 1
+#define REPORT_RATE 1000
 #define SERIAL_DEBUG
-#define VERSION "0.3.0p"
+#define VERSION "0.3.3p"
 
 SI7021 sensor;
 
-long last = 0;
+unsigned long last = 0;
 
 void setup() {
-  Particle.variable( "version", VERSION );
-
   sensor.begin();
 
   #ifdef SERIAL_DEBUG
@@ -23,9 +21,10 @@ void loop() {
   char device[50];
   char content[255];
   int photocell;
+  unsigned long now = millis();
 
-  if( ( Time.now() - last ) >= REPORT_RATE ) {
-    last = Time.now();
+  if( ( now - last ) >= REPORT_RATE ) {
+    last = now;
 
     System.deviceID().toCharArray( device, 50 );
 

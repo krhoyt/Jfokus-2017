@@ -1,17 +1,16 @@
 #include <Constants.h>
 #include <MQTT.h>
 #include <Particle_SI7021.h>
-#include <SparkJson.h>
 
 #define PHOTOCELL_PIN A0
-#define REPORT_RATE 1
+#define REPORT_RATE 1000
 #define SERIAL_DEBUG
-#define VERSION "0.3.0w"
+#define VERSION "0.3.3w"
 
 MQTT client( Constants::IOT_HOST, 1883, callback );
 SI7021 sensor;
 
-long last = 0;
+unsigned long last = 0;
 
 void setup() {
   Particle.variable( "version", VERSION );
@@ -24,9 +23,13 @@ void setup() {
 }
 
 void loop() {
+  unsigned long now;
+
   if( client.isConnected() ) {
-    if( ( Time.now() - last ) >= REPORT_RATE ) {
-      last = Time.now();
+    now = millis();
+
+    if( ( now - last ) >= REPORT_RATE ) {
+      last = now;
       report();
     }
 
@@ -45,45 +48,47 @@ void loop() {
 }
 
 void report() {
+  char device[20];
   char content[200];
   int photocell;
-  String device;
 
-  device = System.deviceID();
-  char client[device.length()];
-  device.toCharArray( client, device.length() );
+  System.deviceID().toCharArray( device, sizeof( device ) );
 
   photocell = analogRead( PHOTOCELL_PIN );
   photocell = map( photocell, 0, 4095, 0, 100 );
 
-  StaticJsonBuffer<250> buffer;
-  JsonObject& doc = buffer.createObject();
-
-  doc["client"] = client;
-  doc["temperature"] = ( sensor.getCelsiusHundredths() / 100 );
-  doc["humidity"] = sensor.getHumidityPercent();
-  doc["light"] = photocell;
-  doc["timestamp"] = Time.now();
-  doc["type"] = "Photon";
-  doc["id"] = "IBM";
-
-  JsonObject& color = doc.createNestedObject( "color" );
-  color["red"] = 0;
-  color["green"] = 174;
-  color["blue"] = 239;
-
-  doc.printTo( content, sizeof( buffer ) );
+  snprintf(
+    content,
+    sizeof( content ),
+    "{"
+    "\"type\": \"Photon\", "
+    "\"id\": \"IBM\", "
+    "\"client\": \"%s\", "
+    "\"temperature\": %u, "
+    "\"humidity\": %u, "
+    "\"light\": %u, "
+    "\"timestamp\": %lu, "
+    "\"color\": {"
+      "\"red\": 0, "
+      "\"green\": 174, "
+      "\"blue\": 239"
+    "}"
+    "}",
+    device,
+    ( sensor.getCelsiusHundredths() / 100 ),
+    sensor.getHumidityPercent(),
+    photocell,
+    Time.now()
+  );
 
   #ifdef SERIAL_DEBUG
     Serial.println( content );
   #endif
 
-  /*
   client.publish(
     Constants::IOT_TOPIC,
     content
   );
-  */
 }
 
 void callback( char* topic, byte* payload, unsigned int length ) {
