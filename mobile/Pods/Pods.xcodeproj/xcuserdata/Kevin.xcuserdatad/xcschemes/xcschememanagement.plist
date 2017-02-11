@@ -4,6 +4,21 @@
 <dict>
 	<key>SchemeUserState</key>
 	<dict>
+		<key>CocoaAsyncSocket.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>CocoaMQTT.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>MSWeakTimer.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
 		<key>Pods-Bean.xcscheme</key>
 		<dict>
 			<key>isShown</key>
@@ -17,12 +32,27 @@
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
-		<key>71F71559B247AF86D78907D8D024761A</key>
+		<key>7E1E41D1203B4D2A4495B3C7A870B6E5</key>
 		<dict>
 			<key>primary</key>
 			<true/>
 		</dict>
-		<key>B7EA8E22C3872B9295AEED21C6F14162</key>
+		<key>AC0D2D2B4EE7C873431AB3502859CA60</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>B0C25875478BC32DFDE742E25E251B19</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>D4A07B8ABC6D3CEC8CD4F149A4E17BDB</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>DCCA952DDCE9BC06A78FBC4E263B033D</key>
 		<dict>
 			<key>primary</key>
 			<true/>

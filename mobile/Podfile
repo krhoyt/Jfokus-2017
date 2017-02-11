@@ -7,4 +7,5 @@ target 'Bean' do
 
   # Pods for Bean
 	pod 'SwiftyJSON'
+	pod 'CocoaMQTT'  	
 end
